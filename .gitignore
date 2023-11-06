@@ -1,0 +1,9 @@
+# IDE files
+/.idea
+
+# binary
+/bin
+
+#config and credentials
+credentials.yaml
+config.yaml
