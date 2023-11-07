@@ -50,6 +50,7 @@ func NewHttpServer(d *DepHttpServer) (*HttpServer, error) {
 }
 
 func (s *HttpServer) Run(ctx context.Context, ch chan error) {
+	ctx, cancel := context.WithCancel(ctx)
 	go func() {
 		ch<-s.server.ListenAndServe()
 	}()
@@ -61,6 +62,6 @@ func (s *HttpServer) Run(ctx context.Context, ch chan error) {
 	}
 }
 
-func (s *HttpServer) ShutDown() {
-	s.server.Shutdown(context.Background())
+func (s *HttpServer) ShutDown(ctx context.Context) {
+	s.server.Shutdown(ctx)
 }

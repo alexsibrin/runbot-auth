@@ -1,5 +1,11 @@
 package config
 
+type Config struct {
+	PostgreSQL
+	Redis
+	HttpServer
+}
+
 type PostgreSQL struct {
 }
 
