@@ -15,3 +15,7 @@ type Redis struct {
 type HttpServer struct {
 	Addr string
 }
+
+func NewConfig() (*Config, error) {
+	return nil, nil
+}
