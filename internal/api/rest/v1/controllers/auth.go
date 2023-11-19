@@ -2,15 +2,20 @@ package rest
 
 import (
 	"github.com/gin-gonic/gin"
-	"runbot-auth/internal/services"
 )
 
-type DepAuth struct {
-	Service services.IAuth
+type AuthService interface {
+	SignUp()
+	Login()
+	LogOut()
+}
+
+type DependenciesAuthController struct {
+	Service AuthService
 }
 
 type Auth struct {
-	service services.IAuth
+	service AuthService
 }
 
 func (c *Auth) SignUp(g *gin.Context) {
