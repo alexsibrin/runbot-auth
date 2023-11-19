@@ -13,7 +13,7 @@ var (
 	ErrDepHttpServerHandlerIsNil = errors.New("DepHttpServer.Handler is nil")
 )
 
-type DepHttpServer struct {
+type DependenciesHttpServer struct {
 	Config  *config.HttpServer
 	Handler http.Handler
 }
@@ -25,7 +25,7 @@ type HttpServer struct {
 	server *http.Server
 }
 
-func NewHttpServer(d *DepHttpServer) (*HttpServer, error) {
+func NewHttpServer(d *DependenciesHttpServer) (*HttpServer, error) {
 	if d == nil {
 		return nil, ErrDepHttpServerIsNil
 	}
@@ -49,17 +49,14 @@ func NewHttpServer(d *DepHttpServer) (*HttpServer, error) {
 	}, nil
 }
 
-func (s *HttpServer) Run(ctx context.Context, ch chan error) {
-	ctx, cancel := context.WithCancel(ctx)
-	go func() {
-		ch<-s.server.ListenAndServe()
-	}()
+func (s *HttpServer) Run(ctx context.Context) {
+	ctx, cancel := context.WithCancelCause(ctx)
 
-	select {
-	case <-ctx.Done():
-		s.ShutDown()
-	case :
+	if err := s.server.ListenAndServe(); err != nil {
+		cancel(err)
 	}
+
+	<-ctx.Done()
 }
 
 func (s *HttpServer) ShutDown(ctx context.Context) {
