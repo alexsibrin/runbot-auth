@@ -13,6 +13,8 @@ var (
 	ErrDepHttpServerHandlerIsNil = errors.New("DepHttpServer.Handler is nil")
 )
 
+// TODO: describe config in this package
+
 type DependenciesHttpServer struct {
 	Config  *config.HttpServer
 	Handler http.Handler
