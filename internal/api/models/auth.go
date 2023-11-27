@@ -1,12 +1,12 @@
-package rest
+package models
 
-type SignUpModel struct {
+type SignUp struct {
 	Email    string
 	Password string
 	Name     string
 }
 
-type LogInModel struct {
+type LogIn struct {
 	Email    string
 	Password string
 }
