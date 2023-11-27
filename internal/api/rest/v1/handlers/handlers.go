@@ -1,8 +1,13 @@
-package v1
+package handlers
 
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+)
+
+const (
+	handlerKey = "handler"
+	methodKey  = "method"
 )
 
 type ErrUnitIsNil struct {
