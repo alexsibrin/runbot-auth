@@ -1,37 +1,29 @@
-package rest
+package v1
 
 import (
 	"errors"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"runbot-auth/internal/api/rest/v1/handlers"
+	"runbot-auth/internal/api/rest/v1/middlewares"
+)
+
+const (
+	v1path           = "/v1"
+	SignUpPath       = "/signup"
+	LogInPath        = "/login"
+	RefreshTokenPath = "/refresh"
 )
 
 var (
 	ErrDependenciesAreNil   = errors.New("dependencies are nil")
-	ErrDepControllersAreNil = errors.New("controllers are nil")
+	ErrDepHandlersAreNil    = errors.New("handlers are nil")
 	ErrDepMiddlewaresAreNil = errors.New("middlewares are nil")
 )
 
-type AuthController interface {
-	SignUp(*gin.Context)
-	LogIn(*gin.Context)
-}
-
-type Controllers struct {
-	Auth AuthController
-}
-
-type AuthMiddleware interface {
-	Check(*gin.Context)
-}
-
-type Middlewares struct {
-	Auth AuthMiddleware
-}
-
 type DependenciesRouter struct {
-	Controllers *Controllers
-	Middlewares *Middlewares
+	Handlers    *handlers.Handlers
+	Middlewares *middlewares.Middlewares
 }
 
 func NewRouter(dep *DependenciesRouter) (http.Handler, error) {
@@ -40,8 +32,8 @@ func NewRouter(dep *DependenciesRouter) (http.Handler, error) {
 		return nil, ErrDependenciesAreNil
 	}
 
-	if dep.Controllers == nil {
-		return nil, ErrDepControllersAreNil
+	if dep.Handlers == nil {
+		return nil, ErrDepHandlersAreNil
 	}
 
 	if dep.Middlewares == nil {
@@ -51,15 +43,15 @@ func NewRouter(dep *DependenciesRouter) (http.Handler, error) {
 	rootrouter := gin.New()
 
 	// Creating router 1st version
-	v1router := rootrouter.Group("/v1")
+	v1router := rootrouter.Group(v1path)
 
 	// Creating public router
-	v1router.POST("/signup", dep.Controllers.Auth.SignUp)
-	v1router.POST("/login", dep.Controllers.Auth.LogIn)
+	v1router.POST(SignUpPath, dep.Handlers.Auth.SignUp)
+	v1router.POST(LogInPath, dep.Handlers.Auth.LogIn)
 
-	// Creating the secured router
-	securedrouter := v1router.Group("")
-	securedrouter.Use(dep.Middlewares.Auth.Check)
+	// Creating the secured router part
+	v1router.Use(dep.Middlewares.Auth.Check)
+	v1router.GET(RefreshTokenPath)
 
 	return rootrouter, nil
 }

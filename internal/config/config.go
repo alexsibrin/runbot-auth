@@ -9,6 +9,7 @@ const (
 
 var (
 	ErrWrongInitKey = errors.New("wrong config init key")
+	ErrConfigInit   = errors.New("error while config initialization")
 )
 
 type Config struct {
@@ -40,9 +41,9 @@ func NewConfig(key string) (config *Config, err error) {
 }
 
 func initByYamlKey() (*Config, error) {
-	return nil, nil
+	return nil, ErrConfigInit
 }
 
 func initByEnvKey() (*Config, error) {
-	return nil, nil
+	return nil, ErrConfigInit
 }
