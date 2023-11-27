@@ -8,7 +8,9 @@ import (
 	"os"
 	"os/signal"
 	"runbot-auth/internal/api/rest"
+	v1 "runbot-auth/internal/api/rest/v1/handlers"
 	"runbot-auth/internal/config"
+	"runbot-auth/internal/services"
 	"sync"
 	"syscall"
 )
@@ -26,7 +28,11 @@ func main() {
 
 	// <- init db, cache
 
-	// <-- init controllers, middlewares, router
+	// <- init services
+	authservice, err := services.NewAuth(&services.DependenciesAuth{})
+
+	// <-- init handlers, middlewares, router
+	authhandler, err := v1.NewAuth(&v1.DependenciesAuth{})
 
 	// Init http server
 	server, err := rest.NewHttpServer(&rest.DependenciesHttpServer{
