@@ -1,9 +1,12 @@
 package services
 
+import "context"
+
 type IAuth interface {
-	SignUp()
+	SignUp(ctx context.Context) (string, error)
+	LogIn(ctx context.Context)
 }
 
-type IServices interface {
+type Services struct {
 	IAuth
 }
