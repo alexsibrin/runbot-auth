@@ -32,11 +32,22 @@ func main() {
 	authservice, err := services.NewAuth(&services.DependenciesAuth{})
 
 	// <-- init handlers, middlewares, router
-	authhandler, err := v1.NewAuth(&v1.DependenciesAuth{})
+	authhandler, err := v1.NewAuth(&v1.DependenciesAuth{
+		Service: authservice,
+	})
+
+	handlers := &v1.Handlers{
+		Auth: authhandler,
+	}
+
+	router, err := rest.NewRouter(&rest.DependenciesRouter{
+		Handlers: handlers,
+	})
 
 	// Init http server
 	server, err := rest.NewHttpServer(&rest.DependenciesHttpServer{
-		Config: conf.HttpServer,
+		Config:  conf.HttpServer,
+		Handler: router,
 	})
 	if err != nil {
 		log.Fatal(err)
