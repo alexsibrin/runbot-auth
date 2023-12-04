@@ -10,3 +10,8 @@ type LogIn struct {
 	Email    string
 	Password string
 }
+
+type Token struct {
+	Access  string
+	Refresh string
+}
