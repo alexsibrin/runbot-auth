@@ -13,6 +13,7 @@ var (
 )
 
 type Config struct {
+	Auth
 	*PostgreSQL
 	*Redis
 	*HttpServer
@@ -26,6 +27,10 @@ type Redis struct {
 
 type HttpServer struct {
 	Addr string
+}
+
+type Auth struct {
+	TokenKey string
 }
 
 func NewConfig(key string) (config *Config, err error) {
