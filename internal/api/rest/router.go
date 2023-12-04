@@ -1,4 +1,4 @@
-package v1
+package rest
 
 import (
 	"errors"
@@ -20,6 +20,15 @@ var (
 	ErrDepHandlersAreNil    = errors.New("handlers are nil")
 	ErrDepMiddlewaresAreNil = errors.New("middlewares are nil")
 )
+
+type IAuthHandlers interface {
+	SignUp(ctx *gin.Context)
+	LogIn(ctx *gin.Context)
+}
+
+type Handlers struct {
+	Auth IAuthHandlers
+}
 
 type DependenciesRouter struct {
 	Handlers    *handlers.Handlers
