@@ -4,7 +4,6 @@ import (
 	"errors"
 	"github.com/gin-gonic/gin"
 	"net/http"
-	"runbot-auth/internal/api/rest/v1/handlers"
 	"runbot-auth/internal/api/rest/v1/middlewares"
 )
 
@@ -12,7 +11,8 @@ const (
 	v1path           = "/v1"
 	SignUpPath       = "/signup"
 	LogInPath        = "/login"
-	RefreshTokenPath = "/refresh"
+	TokenPath        = "/token"
+	TokenRefreshPath = TokenPath + "/refresh"
 )
 
 var (
@@ -23,15 +23,21 @@ var (
 
 type IAuthHandlers interface {
 	SignUp(ctx *gin.Context)
-	LogIn(ctx *gin.Context)
+	SignIn(ctx *gin.Context)
+}
+
+type ITokenHandlers interface {
+	Refresh(ctx *gin.Context)
+	Create(ctx *gin.Context)
 }
 
 type Handlers struct {
-	Auth IAuthHandlers
+	Auth  IAuthHandlers
+	Token ITokenHandlers
 }
 
 type DependenciesRouter struct {
-	Handlers    *handlers.Handlers
+	Handlers    *Handlers
 	Middlewares *middlewares.Middlewares
 }
 
@@ -54,13 +60,13 @@ func NewRouter(dep *DependenciesRouter) (http.Handler, error) {
 	// Creating router 1st version
 	v1router := rootrouter.Group(v1path)
 
-	// Creating public router
+	// Auth handlers
 	v1router.POST(SignUpPath, dep.Handlers.Auth.SignUp)
-	v1router.POST(LogInPath, dep.Handlers.Auth.LogIn)
+	v1router.POST(LogInPath, dep.Handlers.Auth.SignIn)
 
-	// Creating the secured router part
-	v1router.Use(dep.Middlewares.Auth.Check)
-	v1router.GET(RefreshTokenPath)
+	// Token handlers
+	v1router.POST(TokenPath, dep.Handlers.Token.Create)
+	v1router.POST(TokenRefreshPath, dep.Handlers.Token.Refresh)
 
 	return rootrouter, nil
 }

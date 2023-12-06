@@ -33,7 +33,7 @@ func main() {
 
 	// <-- init handlers, middlewares, router
 	authhandler, err := v1.NewAuth(&v1.DependenciesAuth{
-		Service: authservice,
+		AuthUsecase: authservice,
 	})
 
 	handlers := &v1.Handlers{

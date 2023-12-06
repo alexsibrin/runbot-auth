@@ -24,7 +24,7 @@ func NewErrUnitIsNil(unit string) ErrUnitIsNil {
 
 type IAuthHandlers interface {
 	SignUp(*gin.Context)
-	LogIn(*gin.Context)
+	SignIn(*gin.Context)
 }
 
 type DependenciesControllers struct {

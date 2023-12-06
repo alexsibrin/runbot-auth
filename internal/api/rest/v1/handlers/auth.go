@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/gin-gonic/gin"
 	"net/http"
-	"runbot-auth/internal/api/models"
+	"runbot-auth/internal/api/rest/models"
 	"runbot-auth/internal/services"
 	"runtime"
 )
@@ -19,21 +19,21 @@ type Logger interface {
 	Error(error)
 }
 
-type IAuthService interface {
+type IAuthUsecase interface {
 	Auth(ctx context.Context, model services.SignUpModel) (string, string, error)
 	Refresh(ctx context.Context, rtoken string) (string, string, error)
 	LogOut(ctx context.Context) error
 }
 
 type DependenciesAuth struct {
-	CookieKey string
-	Service   IAuthService
-	Logger    Logger
+	CookieKey   string
+	AuthUsecase IAuthUsecase
+	Logger      Logger
 }
 
 type Auth struct {
 	cookiekey string
-	service   IAuthService
+	usecase   IAuthUsecase
 	logger    Logger
 }
 
@@ -43,8 +43,8 @@ func NewAuth(dep *DependenciesAuth) (*Auth, error) {
 	if dep == nil {
 		return nil, NewErrUnitIsNil("dep Auth")
 	}
-	if dep.Service == nil {
-		return nil, NewErrUnitIsNil("dep auth service")
+	if dep.AuthUsecase == nil {
+		return nil, NewErrUnitIsNil("dep auth usecase")
 	}
 	if dep.Logger == nil {
 		return nil, NewErrUnitIsNil("dep auth logger")
@@ -58,7 +58,7 @@ func NewAuth(dep *DependenciesAuth) (*Auth, error) {
 
 	return &Auth{
 		cookiekey: dep.CookieKey,
-		service:   dep.Service,
+		usecase:   dep.AuthUsecase,
 		logger:    dep.Logger,
 	}, nil
 }
@@ -71,7 +71,7 @@ func (h *Auth) SignUp(g *gin.Context) {
 		g.JSON(http.StatusBadRequest, err)
 	}
 
-	atoken, rtoken, err := h.service.Auth(g, services.SignUpModel{
+	atoken, rtoken, err := h.usecase.Auth(g, services.SignUpModel{
 		Email:    model.Email,
 		Password: model.Password,
 		Name:     model.Name,
