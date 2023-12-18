@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+message GetAccount {
+  string UUID = 1;
+}
+
+message GetAccountResponse {
+  string UUID = 1;
+  string Name = 2;
+  string Email = 3;
+}
+
+service Account {
+  rpc Get(GetAccount) returns (GetAccountResponse);
+}

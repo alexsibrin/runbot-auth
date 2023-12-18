@@ -1,9 +1,10 @@
-package rest
+package v1
 
 import (
 	"errors"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"runbot-auth/internal/api/rest/v1/handlers"
 	"runbot-auth/internal/api/rest/v1/middlewares"
 )
 
@@ -21,19 +22,8 @@ var (
 	ErrDepMiddlewaresAreNil = errors.New("middlewares are nil")
 )
 
-type IAuthHandlers interface {
-	SignUp(ctx *gin.Context)
-	SignIn(ctx *gin.Context)
-}
-
-type ITokenHandlers interface {
-	Refresh(ctx *gin.Context)
-	Create(ctx *gin.Context)
-}
-
 type Handlers struct {
-	Auth  IAuthHandlers
-	Token ITokenHandlers
+	Account *handlers.Account
 }
 
 type DependenciesRouter struct {
@@ -58,15 +48,12 @@ func NewRouter(dep *DependenciesRouter) (http.Handler, error) {
 	rootrouter := gin.New()
 
 	// Creating router 1st version
-	v1router := rootrouter.Group(v1path)
+	router := rootrouter.Group(v1path)
 
-	// Auth handlers
-	v1router.POST(SignUpPath, dep.Handlers.Auth.SignUp)
-	v1router.POST(LogInPath, dep.Handlers.Auth.SignIn)
-
-	// Token handlers
-	v1router.POST(TokenPath, dep.Handlers.Token.Create)
-	v1router.POST(TokenRefreshPath, dep.Handlers.Token.Refresh)
+	// Account handlers
+	router.POST(SignUpPath, dep.Handlers.Account.SignUp)
+	router.POST(LogInPath, dep.Handlers.Account.SignIn)
+	router.POST(LogInPath, dep.Handlers.Account.Refresh)
 
 	return rootrouter, nil
 }

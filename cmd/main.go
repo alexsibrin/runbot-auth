@@ -7,46 +7,60 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"runbot-auth/internal/api/controllers"
 	"runbot-auth/internal/api/rest"
-	v1 "runbot-auth/internal/api/rest/v1/handlers"
+	routerv1 "runbot-auth/internal/api/rest/v1"
+	handlersv1 "runbot-auth/internal/api/rest/v1/handlers"
 	"runbot-auth/internal/config"
-	"runbot-auth/internal/services"
+	"runbot-auth/internal/usecases"
 	"sync"
 	"syscall"
 )
 
 func main() {
 	log.Println("App is starting the initialization...")
+
 	// Init config
 	conf, err := config.NewConfig(config.EnvInitKey)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// <- init logger
+	// init logger
 	defer log.Println("App is stopped.")
 
-	// <- init db, cache
+	// init db, cache
 
-	// <- init services
-	authservice, err := services.NewAuth(&services.DependenciesAuth{})
+	// init usecases
+	accountusecase, err := usecases.NewAccount(&usecases.AccountDependencies{})
 
-	// <-- init handlers, middlewares, router
-	authhandler, err := v1.NewAuth(&v1.DependenciesAuth{
-		AuthUsecase: authservice,
+	// init controllers
+	accountcontroller, err := controllers.NewAccount(&controllers.AccountDependencies{
+		Usecase: accountusecase,
 	})
 
-	handlers := &v1.Handlers{
-		Auth: authhandler,
+	// init handlers, middlewares, router
+	accounthandlers, err := handlersv1.NewAccount(&handlersv1.DependenciesAccount{
+		AccountController: accountcontroller,
+	})
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	router, err := rest.NewRouter(&rest.DependenciesRouter{
-		Handlers: handlers,
+	router, err := routerv1.NewRouter(&routerv1.DependenciesRouter{
+		Handlers: &routerv1.Handlers{
+			Account: accounthandlers,
+		},
 	})
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	// Init http server
-	server, err := rest.NewHttpServer(&rest.DependenciesHttpServer{
-		Config:  conf.HttpServer,
+	// Init http restserver
+	restserver, err := rest.NewServer(&rest.DependenciesServer{
+		Config: &rest.Config{
+			Addr: conf.Server.Addr,
+		},
 		Handler: router,
 	})
 	if err != nil {
@@ -61,12 +75,12 @@ func main() {
 
 	wg.Add(1)
 	go func() {
-		server.Run(ctx)
+		restserver.Run(ctx)
 		wg.Done()
 	}()
 
 	log.Println("App is running.")
-	<-ctx.Done()
+	ctx.Done()
 
 	if !errors.Is(ctx.Err(), context.Canceled) {
 		err := context.Cause(ctx)

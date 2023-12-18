@@ -1,13 +1,8 @@
 package entities
 
-type Auth struct {
+type Account struct {
 	Email     string
 	Password  string
 	Name      string
 	CreatedAt string
-}
-
-type Token struct {
-	Access  string
-	Refresh string
 }

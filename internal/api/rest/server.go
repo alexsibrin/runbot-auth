@@ -4,40 +4,43 @@ import (
 	"context"
 	"errors"
 	"net/http"
-	"runbot-auth/internal/config"
 )
 
 var (
-	ErrDepHttpServerIsNil        = errors.New("DepHttpServer is nil")
-	ErrDepHttpServerConfigIsNil  = errors.New("DepHttpServer.Config is nil")
-	ErrDepHttpServerHandlerIsNil = errors.New("DepHttpServer.Handler is nil")
+	ErrDepServerIsNil        = errors.New("DepServer is nil")
+	ErrDepServerConfigIsNil  = errors.New("DepServer.Config is nil")
+	ErrDepServerHandlerIsNil = errors.New("DepServer.Handler is nil")
 )
 
 // TODO: describe config in this package
 
-type DependenciesHttpServer struct {
-	Config  *config.HttpServer
+type Config struct {
+	Addr string
+}
+
+type DependenciesServer struct {
+	Config  *Config
 	Handler http.Handler
 }
 
-type HttpServer struct {
-	config  *config.HttpServer
+type Server struct {
+	config  *Config
 	handler http.Handler
 
 	server *http.Server
 }
 
-func NewHttpServer(d *DependenciesHttpServer) (*HttpServer, error) {
+func NewServer(d *DependenciesServer) (*Server, error) {
 	if d == nil {
-		return nil, ErrDepHttpServerIsNil
+		return nil, ErrDepServerIsNil
 	}
 
 	if d.Config == nil {
-		return nil, ErrDepHttpServerConfigIsNil
+		return nil, ErrDepServerConfigIsNil
 	}
 
 	if d.Handler == nil {
-		return nil, ErrDepHttpServerHandlerIsNil
+		return nil, ErrDepServerHandlerIsNil
 	}
 
 	hs := &http.Server{
@@ -45,13 +48,13 @@ func NewHttpServer(d *DependenciesHttpServer) (*HttpServer, error) {
 		Handler: d.Handler,
 	}
 
-	return &HttpServer{
+	return &Server{
 		config: d.Config,
 		server: hs,
 	}, nil
 }
 
-func (s *HttpServer) Run(ctx context.Context) {
+func (s *Server) Run(ctx context.Context) {
 	ctx, cancel := context.WithCancelCause(ctx)
 
 	if err := s.server.ListenAndServe(); err != nil {
@@ -59,8 +62,9 @@ func (s *HttpServer) Run(ctx context.Context) {
 	}
 
 	<-ctx.Done()
+	s.ShutDown(ctx)
 }
 
-func (s *HttpServer) ShutDown(ctx context.Context) {
+func (s *Server) ShutDown(ctx context.Context) {
 	s.server.Shutdown(ctx)
 }

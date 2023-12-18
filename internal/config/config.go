@@ -14,18 +14,18 @@ var (
 
 type Config struct {
 	Auth
-	*PostgreSQL
-	*Redis
-	*HttpServer
+	PostgreSQL
+	ClickHouse
+	Server
 }
 
 type PostgreSQL struct {
 }
 
-type Redis struct {
+type ClickHouse struct {
 }
 
-type HttpServer struct {
+type Server struct {
 	Addr string
 }
 

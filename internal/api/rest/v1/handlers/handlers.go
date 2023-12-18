@@ -27,10 +27,16 @@ type IAuthHandlers interface {
 	SignIn(*gin.Context)
 }
 
-type DependenciesControllers struct {
+type HandlersDependencies struct {
 	Auth IAuthHandlers
 }
 
 type Handlers struct {
 	Auth IAuthHandlers
+}
+
+func NewHandlers(d *HandlersDependencies) (*Handlers, error) {
+	return &Handlers{
+		Auth: d.Auth,
+	}, nil
 }

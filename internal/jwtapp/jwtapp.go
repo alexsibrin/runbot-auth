@@ -1,18 +1,18 @@
-package integrations
+package jwtapp
 
 import "runbot-auth/internal/entities"
 
 type ISigner interface {
-	Sign(a *entities.Auth) (string, error)
+	Sign(a *entities.Account) (string, error)
 }
 
 type TempStruct struct {
 }
 
-func Sign(a *entities.Auth) (string, error) {
+func Sign(a *entities.Account) (string, error) {
 	return "", nil
 }
 
 func Valid(token string) error {
-
+	return nil
 }

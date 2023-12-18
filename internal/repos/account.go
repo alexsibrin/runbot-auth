@@ -1,6 +1,6 @@
 package repos
 
-type Auth struct {
+type Account struct {
 	UUID      string
 	Name      string
 	Email     string
