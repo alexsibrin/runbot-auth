@@ -11,6 +11,7 @@ import (
 	"runbot-auth/internal/api/rest"
 	routerv1 "runbot-auth/internal/api/rest/v1"
 	handlersv1 "runbot-auth/internal/api/rest/v1/handlers"
+	"runbot-auth/internal/api/rpc"
 	"runbot-auth/internal/config"
 	"runbot-auth/internal/usecases"
 	"sync"
@@ -52,6 +53,12 @@ func main() {
 			Account: accounthandlers,
 		},
 	})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Init grpcserver
+	grpcserver, err := rpc.NewServer(&rpc.Config{})
 	if err != nil {
 		log.Fatal(err)
 	}

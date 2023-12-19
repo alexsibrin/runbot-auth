@@ -14,6 +14,7 @@ type IAccountRepo interface {
 }
 
 type AccountDependencies struct {
+	Repo IAccountRepo
 }
 
 type Account struct {
@@ -21,7 +22,9 @@ type Account struct {
 }
 
 func NewAccount(deb *AccountDependencies) (*Account, error) {
-	return nil, nil
+	return &Account{
+		repo: deb.Repo,
+	}, nil
 }
 
 func (u *Account) SignUp(ctx context.Context, account *entities.Account) error {

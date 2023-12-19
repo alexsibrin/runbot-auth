@@ -14,6 +14,12 @@ type Account struct {
 	UpdatedAt int64
 }
 
+type UpdateAccount struct {
+	UUID  string
+	Email string
+	Phone string
+}
+
 type SignIn struct {
 	Email    string
 	Password string

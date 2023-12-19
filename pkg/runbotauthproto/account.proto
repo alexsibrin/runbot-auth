@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+option go_package = "runbot-auth/pkg/runbotauthproto";
+
 message GetAccount {
   string UUID = 1;
 }
