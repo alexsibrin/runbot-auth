@@ -9,9 +9,10 @@ import (
 	"os/signal"
 	"runbot-auth/internal/api/controllers"
 	"runbot-auth/internal/api/rest"
-	routerv1 "runbot-auth/internal/api/rest/v1"
-	handlersv1 "runbot-auth/internal/api/rest/v1/handlers"
+	routerrest "runbot-auth/internal/api/rest/v1"
+	handlersrest "runbot-auth/internal/api/rest/v1/handlers"
 	"runbot-auth/internal/api/rpc"
+	handlersrpc "runbot-auth/internal/api/rpc/handlers"
 	"runbot-auth/internal/config"
 	"runbot-auth/internal/usecases"
 	"sync"
@@ -40,16 +41,16 @@ func main() {
 		Usecase: accountusecase,
 	})
 
-	// init handlers, middlewares, router
-	accounthandlers, err := handlersv1.NewAccount(&handlersv1.DependenciesAccount{
+	// init REST handlers, middlewares, router
+	accounthandlers, err := handlersrest.NewAccount(&handlersrest.DependenciesAccount{
 		AccountController: accountcontroller,
 	})
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	router, err := routerv1.NewRouter(&routerv1.DependenciesRouter{
-		Handlers: &routerv1.Handlers{
+	router, err := routerrest.NewRouter(&routerrest.DependenciesRouter{
+		Handlers: &routerrest.Handlers{
 			Account: accounthandlers,
 		},
 	})
@@ -57,22 +58,27 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// Init grpcserver
-	grpcserver, err := rpc.NewServer(&rpc.Config{})
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	// Init http restserver
 	restserver, err := rest.NewServer(&rest.DependenciesServer{
 		Config: &rest.Config{
-			Addr: conf.Server.Addr,
+			Addr: conf.RestServer.Addr,
 		},
 		Handler: router,
 	})
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	// Init RPC server, handlers
+	accountrpchandlers, err := handlersrpc.NewAccount(&handlersrpc.AccountDependencies{
+		Controller: accountcontroller,
+	})
+
+	grpcserver, err := rpc.NewServer(&rpc.Config{})
+	if err != nil {
+		log.Fatal(err)
+	}
+	grpcserver.Add(accountrpchandlers)
 
 	// Init graceful shutdown
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
@@ -83,6 +89,12 @@ func main() {
 	wg.Add(1)
 	go func() {
 		restserver.Run(ctx)
+		wg.Done()
+	}()
+
+	wg.Add(1)
+	go func() {
+		grpcserver.Run(ctx)
 		wg.Done()
 	}()
 
