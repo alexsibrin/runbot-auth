@@ -19,7 +19,7 @@ type Logger interface {
 
 type IAccountController interface {
 	SignIn(ctx context.Context, model *models.SignIn) (*models.Token, error)
-	SignUp(ctx context.Context, model *models.AccountCreate) (*models.Token, error)
+	Create(ctx context.Context, model *models.AccountCreate) (*models.Token, error)
 	Refresh(ctx context.Context, token *models.Token) (*models.Token, error)
 }
 
@@ -87,7 +87,7 @@ func (h *Account) SignUp(g *gin.Context) {
 		g.JSON(http.StatusBadRequest, err)
 	}
 
-	token, err := h.controller.SignUp(g, &model)
+	token, err := h.controller.Create(g, &model)
 
 	if err != nil {
 		h.logger.Error(err)
