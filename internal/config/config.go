@@ -16,7 +16,7 @@ type Config struct {
 	Auth
 	PostgreSQL
 	ClickHouse
-	Server
+	RestServer
 }
 
 type PostgreSQL struct {
@@ -25,7 +25,7 @@ type PostgreSQL struct {
 type ClickHouse struct {
 }
 
-type Server struct {
+type RestServer struct {
 	Addr string
 }
 
