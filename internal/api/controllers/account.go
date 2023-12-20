@@ -35,9 +35,12 @@ func NewAccount(d *AccountDependencies) (*Account, error) {
 func (c *Account) SignIn(ctx context.Context, model *models.SignIn) (*models.Token, error) {
 	return nil, nil
 }
-func (c *Account) SignUp(ctx context.Context, model *models.AccountCreate) (*models.Token, error) {
+func (c *Account) Create(ctx context.Context, model *models.AccountCreate) (*models.Token, error) {
 	return nil, nil
 }
 func (c *Account) Refresh(ctx context.Context, token *models.Token) (*models.Token, error) {
+	return nil, nil
+}
+func (c *Account) GetOne(ctx context.Context, uuid string) (*models.AccountGet, error) {
 	return nil, nil
 }
