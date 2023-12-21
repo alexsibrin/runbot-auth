@@ -11,6 +11,7 @@ type Account struct {
 	Email     string
 	Password  string
 	Name      string
+	Token     *Token
 	CreatedAt int64
 	UpdatedAt int64
 }
@@ -18,7 +19,6 @@ type Account struct {
 type AccountGet struct {
 	UUID      string
 	Email     string
-	Password  string
 	Name      string
 	CreatedAt int64
 	UpdatedAt int64
