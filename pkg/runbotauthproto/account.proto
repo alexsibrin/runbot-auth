@@ -10,8 +10,32 @@ message GetAccountResponse {
   string UUID = 1;
   string Name = 2;
   string Email = 3;
+  reserved 4, 15;
+  int64 CreatedAt = 16;
+}
+
+message AccountCreate {
+  string Name = 1;
+  string Email = 2;
+  string Password = 3;
+}
+
+message AccountCreateResponse {
+  string UUID = 1;
+  string Name = 2;
+  string Email = 3;
+  string Password = 4;
+  reserved 5, 15;
+  int64 CreatedAt = 16;
+  Token Token = 17;
+}
+
+message Token {
+  string Access = 1;
+  string Refresh = 2;
 }
 
 service Account {
   rpc Get(GetAccount) returns (GetAccountResponse);
+  rpc Add(AccountCreate) returns (AccountCreateResponse);
 }
