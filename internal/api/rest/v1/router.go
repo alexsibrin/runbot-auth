@@ -2,10 +2,10 @@ package v1
 
 import (
 	"errors"
+	"github.com/alexsibrin/runbot-auth/internal/api/rest/v1/handlers"
+	"github.com/alexsibrin/runbot-auth/internal/api/rest/v1/middlewares"
 	"github.com/gin-gonic/gin"
 	"net/http"
-	"runbot-auth/internal/api/rest/v1/handlers"
-	"runbot-auth/internal/api/rest/v1/middlewares"
 )
 
 const (
