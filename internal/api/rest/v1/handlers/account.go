@@ -2,9 +2,9 @@ package handlers
 
 import (
 	"context"
+	"github.com/alexsibrin/runbot-auth/internal/api/models"
 	"github.com/gin-gonic/gin"
 	"net/http"
-	"runbot-auth/internal/api/models"
 )
 
 const (
@@ -19,7 +19,7 @@ type Logger interface {
 
 type IAccountController interface {
 	SignIn(ctx context.Context, model *models.SignIn) (*models.Token, error)
-	Create(ctx context.Context, model *models.AccountCreate) (*models.Token, error)
+	Create(ctx context.Context, model *models.AccountCreate) (*models.Account, error)
 	Refresh(ctx context.Context, token *models.Token) (*models.Token, error)
 }
 
