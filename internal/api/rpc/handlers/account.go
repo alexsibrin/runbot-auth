@@ -2,13 +2,14 @@ package handlers
 
 import (
 	"context"
+	"github.com/alexsibrin/runbot-auth/internal/api/models"
+	"github.com/alexsibrin/runbot-auth/pkg/runbotauthproto"
 	"google.golang.org/grpc"
-	"runbot-auth/internal/api/models"
-	"runbot-auth/pkg/runbotauthproto"
 )
 
 type IController interface {
 	GetOne(ctx context.Context, uuid string) (*models.AccountGet, error)
+	Create(ctx context.Context, model *models.AccountCreate) (*models.Account, error)
 }
 
 type AccountDependencies struct {
@@ -31,6 +32,15 @@ func (h *Account) Register(s *grpc.Server) {
 }
 
 func (h *Account) Get(ctx context.Context, model *runbotauthproto.GetAccount) (*runbotauthproto.GetAccountResponse, error) {
+	modelout, err := h.controller.GetOne(ctx, model.UUID)
+	if err != nil {
+		return nil, err
+	}
+	response := h.convertAccountGetModelToResponse(modelout)
+	return response, nil
+}
+
+func (h *Account) Add(ctx context.Context, model *runbotauthproto.GetAccount) (*runbotauthproto.GetAccountResponse, error) {
 	modelout, err := h.controller.GetOne(ctx, model.UUID)
 	if err != nil {
 		return nil, err
