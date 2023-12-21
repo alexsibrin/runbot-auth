@@ -1,4 +1,4 @@
-module runbot-auth
+module github.com/alexsibrin/runbot-auth
 
 go 1.21.3
 
