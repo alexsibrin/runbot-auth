@@ -2,7 +2,7 @@ package controllers
 
 import (
 	"context"
-	"runbot-auth/internal/api/models"
+	"github.com/alexsibrin/runbot-auth/internal/api/models"
 )
 
 const (
@@ -35,7 +35,7 @@ func NewAccount(d *AccountDependencies) (*Account, error) {
 func (c *Account) SignIn(ctx context.Context, model *models.SignIn) (*models.Token, error) {
 	return nil, nil
 }
-func (c *Account) Create(ctx context.Context, model *models.AccountCreate) (*models.Token, error) {
+func (c *Account) Create(ctx context.Context, model *models.AccountCreate) (*models.Account, error) {
 	return nil, nil
 }
 func (c *Account) Refresh(ctx context.Context, token *models.Token) (*models.Token, error) {
