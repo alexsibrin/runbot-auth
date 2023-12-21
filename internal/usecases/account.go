@@ -2,7 +2,7 @@ package usecases
 
 import (
 	"context"
-	"runbot-auth/internal/entities"
+	"github.com/alexsibrin/runbot-auth/internal/entities"
 )
 
 type ISecurer interface {

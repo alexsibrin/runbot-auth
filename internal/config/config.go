@@ -33,6 +33,8 @@ type Auth struct {
 	TokenKey string
 }
 
+// TODO: Use flags here OR maybe in the main
+
 func NewConfig(key string) (config *Config, err error) {
 	switch key {
 	case EnvInitKey:

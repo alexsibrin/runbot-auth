@@ -1,6 +1,6 @@
 package jwtapp
 
-import "runbot-auth/internal/entities"
+import "github.com/alexsibrin/runbot-auth/internal/entities"
 
 type ISigner interface {
 	Sign(a *entities.Account) (string, error)
