@@ -2,15 +2,15 @@ package controllers
 
 import "fmt"
 
-type ErrDependenciesAreNil struct {
+type ErrUnitIsNil struct {
 	controller string
 	dependency string
 }
 
-func (err ErrDependenciesAreNil) Error() string {
+func (err ErrUnitIsNil) Error() string {
 	return fmt.Sprintf("controller %s got some dependencies are nil: %s", err.controller, err.dependency)
 }
 
-func NewErrDependenciesAreNil(c, d string) error {
-	return ErrDependenciesAreNil{c, d}
+func NewErrUnitIsNil(c, d string) error {
+	return ErrUnitIsNil{c, d}
 }

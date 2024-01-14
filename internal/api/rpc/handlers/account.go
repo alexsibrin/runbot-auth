@@ -8,7 +8,7 @@ import (
 )
 
 type IController interface {
-	GetOne(ctx context.Context, uuid string) (*models.AccountGet, error)
+	GetOne(ctx context.Context, uuid string) (*models.AccountGetResponse, error)
 	Create(ctx context.Context, model *models.AccountCreate) (*models.Account, error)
 }
 
@@ -49,7 +49,7 @@ func (h *Account) Add(ctx context.Context, model *runbotauthproto.GetAccount) (*
 	return response, nil
 }
 
-func (h *Account) convertAccountGetModelToResponse(model *models.AccountGet) *runbotauthproto.GetAccountResponse {
+func (h *Account) convertAccountGetModelToResponse(model *models.AccountGetResponse) *runbotauthproto.GetAccountResponse {
 	return &runbotauthproto.GetAccountResponse{
 		UUID:  model.UUID,
 		Name:  model.Name,

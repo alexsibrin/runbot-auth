@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/alexsibrin/runbot-auth/internal/api/controllers"
 	"github.com/alexsibrin/runbot-auth/internal/api/rest"
-	routerrest "github.com/alexsibrin/runbot-auth/internal/api/rest/v1"
+	restv1 "github.com/alexsibrin/runbot-auth/internal/api/rest/v1"
 	handlersrest "github.com/alexsibrin/runbot-auth/internal/api/rest/v1/handlers"
 	"github.com/alexsibrin/runbot-auth/internal/api/rpc"
 	handlersrpc "github.com/alexsibrin/runbot-auth/internal/api/rpc/handlers"
@@ -23,7 +23,7 @@ func main() {
 	log.Println("App is starting the initialization...")
 
 	// Init config
-	conf, err := config.NewConfig(config.EnvInitKey)
+	conf, err := config.New(config.YamlInitKey)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -35,6 +35,9 @@ func main() {
 
 	// init usecases
 	accountusecase, err := usecases.NewAccount(&usecases.AccountDependencies{})
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// init controllers
 	accountcontroller, err := controllers.NewAccount(&controllers.AccountDependencies{
@@ -49,8 +52,8 @@ func main() {
 		log.Fatal(err)
 	}
 
-	router, err := routerrest.NewRouter(&routerrest.DependenciesRouter{
-		Handlers: &routerrest.Handlers{
+	router, err := restv1.NewRouter(&restv1.DependenciesRouter{
+		Handlers: &restv1.Handlers{
 			Account: accounthandlers,
 		},
 	})
@@ -61,7 +64,8 @@ func main() {
 	// Init http restserver
 	restserver, err := rest.NewServer(&rest.DependenciesServer{
 		Config: &rest.Config{
-			Addr: conf.RestServer.Addr,
+			Host: conf.RestServer.Host,
+			Port: conf.RestServer.Port,
 		},
 		Handler: router,
 	})
@@ -109,4 +113,5 @@ func main() {
 	log.Println("Services are stopping. Please wait...")
 
 	wg.Wait()
+
 }

@@ -9,11 +9,10 @@ import (
 )
 
 const (
-	v1path           = "/v1"
-	SignUpPath       = "/signup"
-	LogInPath        = "/login"
-	TokenPath        = "/token"
-	TokenRefreshPath = TokenPath + "/refresh"
+	v1path      = "/v1"
+	SignUpPath  = "/signup"
+	SignInPath  = "/signin"
+	RefreshPath = "/token"
 )
 
 var (
@@ -52,8 +51,8 @@ func NewRouter(dep *DependenciesRouter) (http.Handler, error) {
 
 	// Account handlers
 	router.POST(SignUpPath, dep.Handlers.Account.SignUp)
-	router.POST(LogInPath, dep.Handlers.Account.SignIn)
-	router.POST(LogInPath, dep.Handlers.Account.Refresh)
+	router.POST(SignInPath, dep.Handlers.Account.SignIn)
+	router.POST(RefreshPath, dep.Handlers.Account.Refresh)
 
 	return rootrouter, nil
 }

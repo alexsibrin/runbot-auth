@@ -9,10 +9,11 @@ type ISigner interface {
 type TempStruct struct {
 }
 
-func Sign(a *entities.Account) (string, error) {
+func (r *TempStruct) Sign(a *entities.Account) (string, error) {
 	return "", nil
 }
 
-func Valid(token string) error {
+func (r *TempStruct) Valid(token string) error {
+
 	return nil
 }

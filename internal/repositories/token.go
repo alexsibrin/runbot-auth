@@ -1,4 +1,4 @@
-package repos
+package repositories
 
 type Token struct {
 	Access  string

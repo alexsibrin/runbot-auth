@@ -3,6 +3,7 @@ package rest
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 )
 
@@ -12,10 +13,9 @@ var (
 	ErrDepServerHandlerIsNil = errors.New("DepServer.Handler is nil")
 )
 
-// TODO: describe config in this package
-
 type Config struct {
-	Addr string
+	Host string
+	Port string
 }
 
 type DependenciesServer struct {
@@ -43,8 +43,10 @@ func NewServer(d *DependenciesServer) (*Server, error) {
 		return nil, ErrDepServerHandlerIsNil
 	}
 
+	addr := fmt.Sprintf("%s:%s", d.Config.Host, d.Config.Port)
+
 	hs := &http.Server{
-		Addr:    d.Config.Addr,
+		Addr:    addr,
 		Handler: d.Handler,
 	}
 
@@ -59,6 +61,7 @@ func (s *Server) Run(ctx context.Context) {
 
 	if err := s.server.ListenAndServe(); err != nil {
 		cancel(err)
+		return
 	}
 
 	<-ctx.Done()

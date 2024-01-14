@@ -1,10 +1,16 @@
 package config
 
-import "errors"
+import (
+	"errors"
+	"github.com/spf13/viper"
+)
 
 const (
-	EnvInitKey  = "env"
+	EnvInitKey = "env"
+
 	YamlInitKey = "yaml"
+	configPath  = "."
+	configName  = "config"
 )
 
 var (
@@ -13,29 +19,27 @@ var (
 )
 
 type Config struct {
-	Auth
 	PostgreSQL
-	ClickHouse
 	RestServer
 }
 
 type PostgreSQL struct {
-}
-
-type ClickHouse struct {
+	Db       string
+	Host     string
+	Port     string
+	User     string
+	Password string
+	SSLMode  bool
 }
 
 type RestServer struct {
-	Addr string
-}
-
-type Auth struct {
-	TokenKey string
+	Host string
+	Port string
 }
 
 // TODO: Use flags here OR maybe in the main
 
-func NewConfig(key string) (config *Config, err error) {
+func New(key string) (config *Config, err error) {
 	switch key {
 	case EnvInitKey:
 		config, err = initByEnvKey()
@@ -48,9 +52,25 @@ func NewConfig(key string) (config *Config, err error) {
 }
 
 func initByYamlKey() (*Config, error) {
+	viper.AddConfigPath(configPath)
+	viper.SetConfigName(configName)
+
+	var c Config
+
+	err := viper.ReadInConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	err = viper.Unmarshal(&c)
+	if err != nil {
+		return nil, err
+	}
+
 	return nil, ErrConfigInit
 }
 
 func initByEnvKey() (*Config, error) {
+	// TODO: Complete me
 	return nil, ErrConfigInit
 }
