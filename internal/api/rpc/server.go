@@ -32,20 +32,24 @@ func (s *Server) Add(service IServiceRegister) {
 	service.Register(s.server)
 }
 
-func (s *Server) Run(ctx context.Context) {
-	ctx, cause := context.WithCancelCause(ctx)
-	list, err := net.Listen("tcp", fmt.Sprintf(":%d", s.config.Port))
+func (s *Server) Run(ctx context.Context) error {
+	addr := fmt.Sprintf(":%d", s.config.Port)
+	listener, err := net.Listen("tcp", addr)
 	if err != nil {
-		cause(err)
-		return
+		return err
 	}
 
-	err = s.server.Serve(list)
-	if err != nil {
-		cause(err)
-		return
+	errchan := make(chan error)
+
+	go func() {
+		errchan <- s.server.Serve(listener)
+	}()
+
+	select {
+	case <-ctx.Done():
+		s.server.GracefulStop()
+		return nil
+	case err := <-errchan:
+		return err
 	}
-	
-	<-ctx.Done()
-	s.server.GracefulStop()
 }

@@ -56,18 +56,21 @@ func NewServer(d *DependenciesServer) (*Server, error) {
 	}, nil
 }
 
-func (s *Server) Run(ctx context.Context) {
-	ctx, cancel := context.WithCancelCause(ctx)
+func (s *Server) Run(ctx context.Context) error {
+	errchan := make(chan error)
 
-	if err := s.server.ListenAndServe(); err != nil {
-		cancel(err)
-		return
+	go func() {
+		errchan <- s.server.ListenAndServe()
+	}()
+
+	select {
+	case <-ctx.Done():
+		return s.ShutDown(ctx)
+	case err := <-errchan:
+		return err
 	}
-
-	<-ctx.Done()
-	s.ShutDown(ctx)
 }
 
-func (s *Server) ShutDown(ctx context.Context) {
-	s.server.Shutdown(ctx)
+func (s *Server) ShutDown(ctx context.Context) error {
+	return s.server.Shutdown(ctx)
 }
