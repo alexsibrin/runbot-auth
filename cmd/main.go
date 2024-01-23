@@ -120,13 +120,19 @@ func main() {
 
 	wg.Add(1)
 	go func() {
-		restserver.Run(ctx)
+		err := restserver.Run(ctx)
+		if err != nil {
+			stop()
+		}
 		wg.Done()
 	}()
 
 	wg.Add(1)
 	go func() {
-		grpcserver.Run(ctx)
+		err := grpcserver.Run(ctx)
+		if err != nil {
+			stop()
+		}
 		wg.Done()
 	}()
 
