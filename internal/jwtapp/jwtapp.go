@@ -6,14 +6,23 @@ type ISigner interface {
 	Sign(a *entities.Account) (string, error)
 }
 
-type TempStruct struct {
+type JwtWrapper struct {
+	publiccertpath string
 }
 
-func (r *TempStruct) Sign(a *entities.Account) (string, error) {
+func New() *JwtWrapper {
+	return &JwtWrapper{}
+}
+
+func (j *JwtWrapper) Init() error {
+
+}
+
+func (j *JwtWrapper) Sign(a *entities.Account) (string, error) {
 	return "", nil
 }
 
-func (r *TempStruct) Valid(token string) error {
+func (j *JwtWrapper) Valid(token string) error {
 
 	return nil
 }
