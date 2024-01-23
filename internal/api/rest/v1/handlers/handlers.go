@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	handlerKey = "handler"
+	handlerKey = "rest handler"
 	methodKey  = "method"
 )
 
@@ -20,12 +20,6 @@ func (err ErrUnitIsNil) Error() string {
 
 func NewErrUnitIsNil(unit string) ErrUnitIsNil {
 	return ErrUnitIsNil{unit}
-}
-
-type Logger interface {
-	AddData(key string, value interface{})
-	Info(string)
-	Error(error)
 }
 
 type IAuthHandlers interface {

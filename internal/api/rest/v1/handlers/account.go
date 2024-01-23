@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/alexsibrin/runbot-auth/internal/api/models"
 	"github.com/alexsibrin/runbot-auth/internal/api/validators"
+	"github.com/alexsibrin/runbot-auth/internal/logapp"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -23,13 +24,13 @@ type IAccountController interface {
 type DependenciesAccount struct {
 	CookieKey         string
 	AccountController IAccountController
-	Logger            Logger
+	Logger            logapp.ILogger
 }
 
 type Account struct {
 	cookiekey  string
 	controller IAccountController
-	logger     Logger
+	logger     logapp.ILogger
 }
 
 func NewAccount(dep *DependenciesAccount) (*Account, error) {
@@ -48,7 +49,7 @@ func NewAccount(dep *DependenciesAccount) (*Account, error) {
 	}
 
 	logger := dep.Logger
-	logger.AddData(handlerKey, accountHandlerKey)
+	logger.WithField(handlerKey, accountHandlerKey)
 
 	return &Account{
 		cookiekey:  dep.CookieKey,
@@ -58,6 +59,8 @@ func NewAccount(dep *DependenciesAccount) (*Account, error) {
 }
 
 func (h *Account) SignIn(g *gin.Context) {
+	h.logger.WithField(methodKey, "SignIn")
+
 	var model models.SignIn
 	err := g.BindJSON(&model)
 	if err != nil {
@@ -76,6 +79,8 @@ func (h *Account) SignIn(g *gin.Context) {
 }
 
 func (h *Account) SignUp(g *gin.Context) {
+	h.logger.WithField(methodKey, "SignUp")
+
 	var model models.AccountCreate
 	err := g.BindJSON(&model)
 	if err != nil {
@@ -94,6 +99,8 @@ func (h *Account) SignUp(g *gin.Context) {
 }
 
 func (h *Account) Create(g *gin.Context) {
+	h.logger.WithField(methodKey, "Create")
+
 	var model models.AccountCreate
 	err := g.BindJSON(&model)
 	if err != nil {
@@ -112,6 +119,8 @@ func (h *Account) Create(g *gin.Context) {
 }
 
 func (h *Account) Refresh(g *gin.Context) {
+	h.logger.WithField(methodKey, "Refresh")
+
 	var model models.Token
 
 	err := g.BindJSON(&model)
