@@ -40,9 +40,11 @@ func NewRouter(dep *DependenciesRouter) (http.Handler, error) {
 		return nil, ErrDepHandlersAreNil
 	}
 
-	if dep.Middlewares == nil {
-		return nil, ErrDepMiddlewaresAreNil
-	}
+	/*
+		if dep.Middlewares == nil {
+			return nil, ErrDepMiddlewaresAreNil
+		}
+	*/
 
 	rootrouter := gin.New()
 
