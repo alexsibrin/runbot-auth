@@ -30,7 +30,7 @@ type PostgreSQL struct {
 }
 
 func New(c *Config) (*PostgreSQL, error) {
-
+	// TODO: Add checking
 	if c == nil {
 		return nil, ErrConfigIsNil
 	}

@@ -12,12 +12,12 @@ type Account struct {
 	db *sql.DB
 }
 
-func NewAccount(dbconnection *sql.DB) (*Account, error) {
-	if dbconnection == nil {
+func NewAccount(dbinst *PostgreSQL) (*Account, error) {
+	if dbinst == nil || dbinst.db == nil {
 		return nil, ErrDbIsNil
 	}
 	return &Account{
-		db: dbconnection,
+		db: dbinst.db,
 	}, nil
 }
 
