@@ -56,6 +56,7 @@ type Account struct {
 }
 
 func NewAccount(d *AccountDependencies) (*Account, error) {
+	// TODO: Add checking
 	return &Account{
 		repo:           d.Repo,
 		secure:         d.Secure,
