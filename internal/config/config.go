@@ -21,6 +21,7 @@ var (
 type Config struct {
 	PostgreSQL
 	RestServer
+	Logger
 }
 
 type PostgreSQL struct {
@@ -35,6 +36,12 @@ type PostgreSQL struct {
 type RestServer struct {
 	Host string
 	Port string
+}
+
+type Logger struct {
+	Level         int
+	Colors        bool
+	FullTimestamp bool
 }
 
 // TODO: Use flags here OR maybe in the main
@@ -67,7 +74,7 @@ func initByYamlKey() (*Config, error) {
 		return nil, err
 	}
 
-	return nil, ErrConfigInit
+	return &c, nil
 }
 
 func initByEnvKey() (*Config, error) {
