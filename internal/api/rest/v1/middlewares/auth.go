@@ -27,7 +27,7 @@ func NewAuthMiddlewares(dep *AuthDependencies) (*AuthMiddlewares, error) {
 	}, nil
 }
 
-func (m *AuthMiddlewares) Check(g *gin.Context) {
+func (m *AuthMiddlewares) CheckToken(g *gin.Context) {
 	// TODO: complete
 	g.Next()
 }

@@ -28,8 +28,8 @@ type Account struct {
 // AccountGet input model for a getting an account by UUID
 type AccountGet string
 
-// AccountGetResponse output model for a response to get account request
-type AccountGetResponse struct {
+// AccountGetModel output model for a response to get account request
+type AccountGetModel struct {
 	UUID      string
 	Email     string
 	Name      string

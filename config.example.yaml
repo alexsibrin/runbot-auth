@@ -1,0 +1,20 @@
+RestServer:
+  Host: your_rest_port
+  Port: your_rest_port
+
+PostgreSQL:
+  Db: your_db_name
+  Host: your_db_host
+  Port: your_db_port
+  User: your_db_user
+  Password: your_db_password
+  SSLMode: true
+  MaxOpenConnections: 0
+  MaxIdleConnections: 0
+  ConnectionMaxLifetime: 0ms
+  ConnectionMaxIdleTime: 0s
+
+Logger:
+  Level: 6
+  Colors: true
+  FullTimestamp: true

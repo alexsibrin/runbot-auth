@@ -9,6 +9,7 @@ import (
 )
 
 var (
+	ErrDependenciesAreNil  = errors.New("dependencies are nil")
 	ErrAccountAlreadyExist = errors.New("account already exists")
 )
 
@@ -56,7 +57,11 @@ type Account struct {
 }
 
 func NewAccount(d *AccountDependencies) (*Account, error) {
+	if d == nil {
+		return nil, ErrDependenciesAreNil
+	}
 	// TODO: Add checking
+	// ---- d.Repo, d.ISecurer, etc
 	return &Account{
 		repo:           d.Repo,
 		secure:         d.Secure,

@@ -23,15 +23,23 @@ type IAccountUsecase interface {
 	SignIn(ctx context.Context, email, pswd string) (*entities.Token, error)
 	SignUp(ctx context.Context, r *usecases.AccountCreateRequest) (*usecases.AccountCreateResult, error)
 	GetOne(ctx context.Context, uuid string) (*entities.Account, error)
-	RefreshToken(ctx context.Context, token *entities.Token) (*entities.Token, error)
+}
+
+type ISecurer interface {
+	Encrypt(account *entities.Account) (*models.Token, error)
+	Decrypt(token *models.Token) (*entities.Account, error)
+	Valid(token entities.RefreshToken) error
+	Refresh(token *entities.Token) (*models.Token, error)
 }
 
 type AccountDependencies struct {
 	Usecase IAccountUsecase
+	Securer ISecurer
 }
 
 type Account struct {
 	usecase IAccountUsecase
+	securer ISecurer
 }
 
 func NewAccount(d *AccountDependencies) (*Account, error) {
@@ -41,8 +49,12 @@ func NewAccount(d *AccountDependencies) (*Account, error) {
 	if d.Usecase == nil {
 		return nil, NewErrUnitIsNil(accountControllerKey, "Usecase")
 	}
+	if d.Securer == nil {
+		return nil, NewErrUnitIsNil(accountControllerKey, "Securer")
+	}
 	return &Account{
 		usecase: d.Usecase,
+		securer: d.Securer,
 	}, nil
 }
 
@@ -108,14 +120,28 @@ func (c *Account) Create(ctx context.Context, model *models.AccountCreate) (*mod
 	return result, nil
 }
 
-// TODO: Complete me
 func (c *Account) RefreshToken(ctx context.Context, token *models.Token) (*models.Token, error) {
-	return nil, nil
+	acc, err := c.securer.Decrypt(token)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: redo
+	entoken, err := c.usecase.SignIn(ctx, acc.Email, acc.Password)
+	if err != nil {
+		return nil, err
+	}
+
+	return c.entityToken2Model(entoken), nil
 }
 
-// TODO: Complete me
-func (c *Account) GetOne(ctx context.Context, uuid string) (*models.AccountGetResponse, error) {
-	return nil, nil
+func (c *Account) GetOne(ctx context.Context, uuid string) (*models.AccountGetModel, error) {
+	acc, err := c.usecase.GetOne(ctx, uuid)
+	if err != nil {
+		return nil, err
+	}
+	result := c.accountEntity2AccountGetModel(acc)
+	return result, nil
 }
 
 func (c *Account) accountCreateModel2Entity(acc *models.AccountCreate) *entities.Account {
@@ -166,6 +192,16 @@ func (c *Account) accountEntity2AccountModel(acc *entities.Account) *models.Acco
 		UUID:      acc.UUID,
 		Email:     acc.Email,
 		Password:  acc.Password,
+		Name:      acc.Name,
+		CreatedAt: acc.CreatedAt,
+		UpdatedAt: acc.UpdatedAt,
+	}
+}
+
+func (c *Account) accountEntity2AccountGetModel(acc *entities.Account) *models.AccountGetModel {
+	return &models.AccountGetModel{
+		UUID:      acc.UUID,
+		Email:     acc.Email,
 		Name:      acc.Name,
 		CreatedAt: acc.CreatedAt,
 		UpdatedAt: acc.UpdatedAt,

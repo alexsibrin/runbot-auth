@@ -13,7 +13,7 @@ const (
 )
 
 type IController interface {
-	GetOne(ctx context.Context, uuid string) (*models.AccountGetResponse, error)
+	GetOne(ctx context.Context, uuid string) (*models.AccountGetModel, error)
 	Create(ctx context.Context, model *models.AccountCreate) (*models.Account, error)
 }
 
@@ -65,7 +65,7 @@ func (h *Account) handlerError(err error) {
 	h.logger.Error(err)
 }
 
-func (h *Account) convertAccountGetModelToResponse(model *models.AccountGetResponse) *runbotauthproto.GetAccountResponse {
+func (h *Account) convertAccountGetModelToResponse(model *models.AccountGetModel) *runbotauthproto.GetAccountResponse {
 	return &runbotauthproto.GetAccountResponse{
 		UUID:  model.UUID,
 		Name:  model.Name,

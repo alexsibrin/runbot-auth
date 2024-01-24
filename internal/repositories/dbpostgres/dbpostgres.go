@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	_ "github.com/lib/pq"
+	"time"
 )
 
 var (
@@ -17,12 +18,16 @@ const (
 )
 
 type Config struct {
-	Db       string
-	Host     string
-	Port     string
-	User     string
-	Password string
-	SSLMode  bool
+	Db                    string
+	Host                  string
+	Port                  string
+	User                  string
+	Password              string
+	SSLMode               bool
+	MaxOpenConnections    int
+	MaxIdleConnections    int
+	ConnectionMaxLifetime time.Duration
+	ConnectionMaxIdletime time.Duration
 }
 
 type PostgreSQL struct {
@@ -30,7 +35,6 @@ type PostgreSQL struct {
 }
 
 func New(c *Config) (*PostgreSQL, error) {
-	// TODO: Add checking
 	if c == nil {
 		return nil, ErrConfigIsNil
 	}
@@ -42,9 +46,21 @@ func New(c *Config) (*PostgreSQL, error) {
 		return nil, err
 	}
 
+	db.SetMaxOpenConns(c.MaxOpenConnections)
+	db.SetMaxIdleConns(c.MaxIdleConnections)
+	db.SetConnMaxLifetime(c.ConnectionMaxLifetime)
+	db.SetConnMaxIdleTime(c.ConnectionMaxIdletime)
+
 	if err = db.Ping(); err != nil {
 		return nil, err
 	}
 
 	return &PostgreSQL{db}, nil
+}
+
+func (p *PostgreSQL) Close() error {
+	if p.db != nil {
+		return p.db.Close()
+	}
+	return ErrDbIsNil
 }

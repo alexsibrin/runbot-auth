@@ -2,9 +2,14 @@ package rpc
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"google.golang.org/grpc"
 	"net"
+)
+
+var (
+	ErrConfigIsNil = errors.New("config is nil")
 )
 
 type IServiceRegister interface {
@@ -21,7 +26,9 @@ type Server struct {
 }
 
 func NewServer(c *Config) (*Server, error) {
-	// TODO: Add checking
+	if c == nil {
+		return nil, ErrConfigIsNil
+	}
 	server := grpc.NewServer()
 	return &Server{
 		server: server,
@@ -34,7 +41,6 @@ func (s *Server) Add(service IServiceRegister) {
 }
 
 func (s *Server) Run(ctx context.Context) error {
-	// TODO: return error and handle it outside
 	addr := fmt.Sprintf(":%d", s.config.Port)
 	listener, err := net.Listen("tcp", addr)
 	if err != nil {
