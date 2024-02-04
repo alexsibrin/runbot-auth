@@ -24,6 +24,12 @@ func NewLogger(config *Config) ILogger {
 		TimestampFormat: time.RFC3339,
 	})
 	l.SetOutput(os.Stdout)
+
+	lvl := config.Level
+	if lvl == 0 {
+		lvl = 6
+	}
+
 	l.SetLevel(logrus.Level(config.Level))
 
 	return l
