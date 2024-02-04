@@ -11,3 +11,5 @@ This service is a part of the microservice distributed system for the Runbot app
 - - -  [ ] Hasher
 - - [ ] Add integration tests
 - [ ] Add docs 
+- [ ] Fix proto models
+- [ ] Add new methods to grpc 
