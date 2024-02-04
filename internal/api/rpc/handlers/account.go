@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"errors"
 	"github.com/alexsibrin/runbot-auth/internal/api/models"
 	"github.com/alexsibrin/runbot-auth/internal/logapp"
 	"github.com/alexsibrin/runbot-auth/pkg/runbotauthproto"
@@ -12,9 +13,15 @@ const (
 	accountKey = "accounts"
 )
 
+var (
+	ErrDependenciesAreNil = errors.New("dependencies are nil")
+	ErrControllerIsNil    = errors.New("controller is nil")
+	ErrLoggerIsNil        = errors.New("logger is nil")
+)
+
 type IController interface {
-	GetOne(ctx context.Context, uuid string) (*models.AccountGetModel, error)
-	Create(ctx context.Context, model *models.AccountCreate) (*models.Account, error)
+	GetOneByEmail(ctx context.Context, email string) (*models.AccountGetModel, error)
+	GetOneByUUID(ctx context.Context, uuid string) (*models.AccountGetModel, error)
 }
 
 type AccountDependencies struct {
@@ -29,7 +36,16 @@ type Account struct {
 }
 
 func NewAccount(d *AccountDependencies) (*Account, error) {
-	// TODO: Add checking
+	if d == nil {
+		return nil, ErrDependenciesAreNil
+	}
+	if d.Controller == nil {
+		return nil, ErrControllerIsNil
+	}
+	if d.Logger == nil {
+		return nil, ErrLoggerIsNil
+	}
+
 	l := d.Logger.WithField(handlersKey, accountKey)
 	return &Account{
 		controller: d.Controller,
@@ -42,17 +58,7 @@ func (h *Account) Register(s *grpc.Server) {
 }
 
 func (h *Account) Get(ctx context.Context, model *runbotauthproto.GetAccount) (*runbotauthproto.GetAccountResponse, error) {
-	modelout, err := h.controller.GetOne(ctx, model.UUID)
-	if err != nil {
-		h.handlerError(err)
-		return nil, err
-	}
-	response := h.convertAccountGetModelToResponse(modelout)
-	return response, nil
-}
-
-func (h *Account) Add(ctx context.Context, model *runbotauthproto.GetAccount) (*runbotauthproto.GetAccountResponse, error) {
-	modelout, err := h.controller.GetOne(ctx, model.UUID)
+	modelout, err := h.controller.GetOneByUUID(ctx, model.UUID)
 	if err != nil {
 		h.handlerError(err)
 		return nil, err
