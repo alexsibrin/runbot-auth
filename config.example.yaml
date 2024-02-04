@@ -1,20 +1,35 @@
+Common:
+  Version: string
+  Health: string
+
 RestServer:
-  Host: your_rest_port
-  Port: your_rest_port
+  Host: string
+  Port: itn
+
+GRPCServer:
+  Port: int
 
 PostgreSQL:
-  Db: your_db_name
-  Host: your_db_host
-  Port: your_db_port
-  User: your_db_user
-  Password: your_db_password
-  SSLMode: true
-  MaxOpenConnections: 0
-  MaxIdleConnections: 0
-  ConnectionMaxLifetime: 0ms
-  ConnectionMaxIdleTime: 0s
+  Db: string
+  Host: string #host.docker.internal
+  Port: int
+  User: string
+  Password: string
+  SSLMode: string
+  MaxOpenConnections:    int
+  MaxIdleConnections:    int
+  ConnectionMaxLifetime: time.Duration
+  ConnectionMaxIdletime: time.Duration
+
+Jwt:
+  Salt: string
+  Issuer: string
+  Subject: string
+  Audience:
+    - string
+  ExpiresIn: time.Duration
 
 Logger:
-  Level: 6
-  Colors: true
-  FullTimestamp: true
+  Level: string
+  Colors: bool
+  FullTimestamp: bool
