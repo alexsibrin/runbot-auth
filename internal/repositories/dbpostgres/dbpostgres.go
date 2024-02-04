@@ -23,7 +23,7 @@ type Config struct {
 	Port                  string
 	User                  string
 	Password              string
-	SSLMode               bool
+	SSLMode               string
 	MaxOpenConnections    int
 	MaxIdleConnections    int
 	ConnectionMaxLifetime time.Duration
@@ -39,10 +39,14 @@ func New(c *Config) (*PostgreSQL, error) {
 		return nil, ErrConfigIsNil
 	}
 
-	connevtstring := fmt.Sprintf("postgresql://%s:%s@%s:%s/%s?sslmode=disable", c.User, c.Password, c.Host, c.Port, c.Db)
+	connevtstring := fmt.Sprintf("postgresql://%s:%s@%s:%s/%s?sslmode=%s", c.User, c.Password, c.Host, c.Port, c.Db, c.SSLMode)
 
 	db, err := sql.Open(postgresKey, connevtstring)
 	if err != nil {
+		return nil, err
+	}
+
+	if err = db.Ping(); err != nil {
 		return nil, err
 	}
 
@@ -50,10 +54,6 @@ func New(c *Config) (*PostgreSQL, error) {
 	db.SetMaxIdleConns(c.MaxIdleConnections)
 	db.SetConnMaxLifetime(c.ConnectionMaxLifetime)
 	db.SetConnMaxIdleTime(c.ConnectionMaxIdletime)
-
-	if err = db.Ping(); err != nil {
-		return nil, err
-	}
 
 	return &PostgreSQL{db}, nil
 }
