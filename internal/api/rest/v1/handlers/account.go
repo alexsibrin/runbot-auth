@@ -7,6 +7,8 @@ import (
 	"github.com/alexsibrin/runbot-auth/internal/api/validators"
 	"github.com/alexsibrin/runbot-auth/internal/logapp"
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
+	"io"
 	"net/http"
 )
 
@@ -15,10 +17,10 @@ const (
 )
 
 type IAccountController interface {
-	SignIn(ctx context.Context, model *models.SignIn) (*models.Token, error)
-	SignUp(ctx context.Context, model *models.AccountCreate) (*models.AccountCreateResponse, error)
-	Create(ctx context.Context, model *models.AccountCreate) (*models.Account, error)
-	RefreshToken(ctx context.Context, token *models.Token) (*models.Token, error)
+	SignIn(ctx context.Context, model *models.SignIn) (*models.SignInResponse, error)
+	SignUp(ctx context.Context, model *models.SignUp) (*models.SignUpResponse, error)
+	GetOneByEmail(ctx context.Context, email string) (*models.AccountGetModel, error)
+	GetOneByUUID(ctx context.Context, uuid string) (*models.AccountGetModel, error)
 }
 
 type DependenciesAccount struct {
@@ -49,104 +51,108 @@ func NewAccount(dep *DependenciesAccount) (*Account, error) {
 	}
 
 	logger := dep.Logger
-	logger.WithField(handlerKey, accountHandlerKey)
+	logger = logger.WithField(handlerKey, accountHandlerKey)
 
 	return &Account{
 		cookiekey:  dep.CookieKey,
 		controller: dep.AccountController,
-		logger:     dep.Logger,
+		logger:     logger,
 	}, nil
 }
 
 func (h *Account) SignIn(g *gin.Context) {
-	h.logger.WithField(methodKey, "SignIn")
+	logger := h.logger.WithField(methodKey, "SignIn")
 
 	var model models.SignIn
-	err := g.BindJSON(&model)
+	err := g.ShouldBindJSON(&model)
 	if err != nil {
-		h.handleError(g, err)
+		h.handleError(g, logger, err)
 		return
 	}
 
-	token, err := h.controller.SignIn(g, &model)
-
+	reponsemodel, err := h.controller.SignIn(g, &model)
 	if err != nil {
-		h.handleError(g, err)
+		h.handleError(g, logger, err)
 		return
 	}
 
-	g.JSON(http.StatusOK, token)
+	h.addTokenToCookie(g, reponsemodel.Token)
+
+	g.JSON(http.StatusOK, reponsemodel)
 }
 
 func (h *Account) SignUp(g *gin.Context) {
-	h.logger.WithField(methodKey, "SignUp")
+	logger := h.logger.WithField(methodKey, "SignUp")
 
-	var model models.AccountCreate
-	err := g.BindJSON(&model)
+	var model models.SignUp
+	err := g.ShouldBindJSON(&model)
 	if err != nil {
-		h.handleError(g, err)
+		h.handleError(g, logger, err)
 		return
 	}
 
-	result, err := h.controller.SignUp(g, &model)
-
+	reponsemodel, err := h.controller.SignUp(g, &model)
 	if err != nil {
-		h.handleError(g, err)
+		h.handleError(g, logger, err)
 		return
 	}
 
-	g.JSON(http.StatusOK, result)
+	h.addTokenToCookie(g, reponsemodel.Token)
+
+	g.JSON(http.StatusOK, reponsemodel)
 }
 
-func (h *Account) Create(g *gin.Context) {
-	h.logger.WithField(methodKey, "Create")
+func (h *Account) GetOne(g *gin.Context) {
+	logger := h.logger.WithField(methodKey, "GetOne")
 
-	var model models.AccountCreate
-	err := g.BindJSON(&model)
+	uuid := g.Param("email")
+	account, err := h.controller.GetOneByEmail(g, uuid)
 	if err != nil {
-		h.handleError(g, err)
+		h.handleError(g, logger, err)
 		return
 	}
 
-	token, err := h.controller.Create(g, &model)
-
-	if err != nil {
-		h.handleError(g, err)
-		return
-	}
-
-	g.JSON(http.StatusOK, token)
+	g.JSON(http.StatusOK, account)
 }
 
-func (h *Account) Refresh(g *gin.Context) {
-	h.logger.WithField(methodKey, "Refresh")
+func (h *Account) GetOneByUUID(g *gin.Context) {
+	logger := h.logger.WithField(methodKey, "GetOneByUUID")
 
-	var model models.Token
-
-	err := g.BindJSON(&model)
+	uuid := g.Param("uuid")
+	account, err := h.controller.GetOneByUUID(g, uuid)
 	if err != nil {
-		h.handleError(g, err)
+		h.handleError(g, logger, err)
 		return
 	}
 
-	newtoken, err := h.controller.RefreshToken(g, &model)
-	if err != nil {
-		h.handleError(g, err)
-		return
-	}
-
-	g.JSON(http.StatusOK, newtoken)
+	g.JSON(http.StatusOK, account)
 }
 
-func (h *Account) handleError(g *gin.Context, err error) {
-	h.logger.Error(err)
+func (h *Account) addTokenToCookie(g *gin.Context, token *models.Token) {
+	g.SetCookie("rt", token.Refresh, 36000, "", "", true, true)
+}
+
+func (h *Account) handleError(g *gin.Context, logger logrus.FieldLogger, err error) {
+	logger.Error(err)
 	code := h.getStatusCode(err)
-	g.JSON(code, err)
+	msg := h.getErrorMessage(err)
+	g.JSON(code, gin.H{"error": msg})
+}
+
+func (h *Account) getErrorMessage(err error) string {
+	switch {
+	case errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF):
+		return "wrong input data, please check the model"
+	default:
+		return err.Error()
+	}
 }
 
 func (h *Account) getStatusCode(err error) int {
 	switch {
-	case errors.Is(err, validators.ErrEmailIsTooShort):
+	case errors.Is(err, validators.ErrEmailIsTooShort) || errors.Is(err, validators.ErrPasswordIsTooShort):
+		return http.StatusBadRequest
+	case errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF):
 		return http.StatusBadRequest
 	default:
 		return http.StatusInternalServerError
