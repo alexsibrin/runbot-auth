@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	handlerKey = "rest handler"
+	handlerKey = "rest_handler"
 	methodKey  = "method"
 )
 
@@ -27,16 +27,24 @@ type IAuthHandlers interface {
 	SignIn(*gin.Context)
 }
 
+type ICommonHandlers interface {
+	Version(*gin.Context)
+	Health(*gin.Context)
+}
+
 type HandlersDependencies struct {
-	Auth IAuthHandlers
+	Auth   IAuthHandlers
+	Common ICommonHandlers
 }
 
 type Handlers struct {
-	Auth IAuthHandlers
+	Auth   IAuthHandlers
+	Common ICommonHandlers
 }
 
 func NewHandlers(d *HandlersDependencies) (*Handlers, error) {
 	return &Handlers{
-		Auth: d.Auth,
+		Auth:   d.Auth,
+		Common: d.Common,
 	}, nil
 }
