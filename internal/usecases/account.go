@@ -10,6 +10,8 @@ import (
 
 var (
 	ErrDependenciesAreNil  = errors.New("dependencies are nil")
+	ErrPaswordHasherIsNil  = errors.New("dependency password hasher is nil")
+	ErrAccountRepoIsNil    = errors.New("dependency account repo is nil")
 	ErrAccountAlreadyExist = errors.New("account already exists")
 )
 
@@ -24,35 +26,25 @@ type AccountCreateResult struct {
 	Token   *entities.Token
 }
 
-// TODO: What to do with it?
 type IPasswordHasher interface {
-	Hash(pswd string) (string, error)
-	Compare(pswd, hash string) error
-}
-
-// TODO: move to controller
-type ISecurer interface {
-	Encrypt(account *entities.Account) (*entities.Token, error)
-	Decrypt(token *entities.Token) (*entities.Account, error)
-	Valid(token entities.RefreshToken) error
-	Refresh(token *entities.Token) (*entities.Token, error)
+	Hash(str string) (string, error)
+	Compare(str, hash string) error
 }
 
 type IAccountRepo interface {
-	GetOne(ctx context.Context, email string) (*entities.Account, error)
+	GetOneByEmail(ctx context.Context, email string) (*entities.Account, error)
+	GetOneByUUID(ctx context.Context, uuid string) (*entities.Account, error)
 	IsExist(ctx context.Context, account *entities.Account) (bool, error)
 	Create(ctx context.Context, account *entities.Account) (*entities.Account, error)
 }
 
 type AccountDependencies struct {
 	Repo           IAccountRepo
-	Secure         ISecurer
 	PasswordHasher IPasswordHasher
 }
 
 type Account struct {
 	repo           IAccountRepo
-	secure         ISecurer
 	passwordhasher IPasswordHasher
 }
 
@@ -60,17 +52,20 @@ func NewAccount(d *AccountDependencies) (*Account, error) {
 	if d == nil {
 		return nil, ErrDependenciesAreNil
 	}
-	// TODO: Add checking
-	// ---- d.Repo, d.ISecurer, etc
+	if d.PasswordHasher == nil {
+		return nil, ErrPaswordHasherIsNil
+	}
+	if d.Repo == nil {
+		return nil, ErrAccountRepoIsNil
+	}
 	return &Account{
 		repo:           d.Repo,
-		secure:         d.Secure,
 		passwordhasher: d.PasswordHasher,
 	}, nil
 }
 
-func (u *Account) SignIn(ctx context.Context, email, pswd string) (*entities.Token, error) {
-	account, err := u.repo.GetOne(ctx, email)
+func (u *Account) SignIn(ctx context.Context, email, pswd string) (*entities.Account, error) {
+	account, err := u.repo.GetOneByEmail(ctx, email)
 	if err != nil {
 		return nil, err
 	}
@@ -80,19 +75,15 @@ func (u *Account) SignIn(ctx context.Context, email, pswd string) (*entities.Tok
 		return nil, err
 	}
 
-	return u.secure.Encrypt(account)
+	return account, nil
 }
 
-func (u *Account) GetOne(ctx context.Context, email string) (*entities.Account, error) {
-	// TODO: Add the checking of the role
-	return u.repo.GetOne(ctx, email)
+func (u *Account) GetOneByEmail(ctx context.Context, email string) (*entities.Account, error) {
+	return u.repo.GetOneByEmail(ctx, email)
 }
 
-func (u *Account) RefreshToken(ctx context.Context, token *entities.Token) (*entities.Token, error) {
-	if err := u.secure.Valid(token.Refresh); err != nil {
-		return nil, err
-	}
-	return u.secure.Refresh(token)
+func (u *Account) GetOneByUUID(ctx context.Context, uuid string) (*entities.Account, error) {
+	return u.repo.GetOneByUUID(ctx, uuid)
 }
 
 func (u *Account) Create(ctx context.Context, r *AccountCreateRequest) (*entities.Account, error) {
@@ -105,27 +96,27 @@ func (u *Account) Create(ctx context.Context, r *AccountCreateRequest) (*entitie
 	return u.repo.Create(ctx, account)
 }
 
-func (u *Account) SignUp(ctx context.Context, r *AccountCreateRequest) (*AccountCreateResult, error) {
-	account := u.createReq2Entity(r)
-	if isexist, err := u.repo.IsExist(ctx, account); err != nil {
+func (u *Account) SignUp(ctx context.Context, account *entities.Account) (*entities.Account, error) {
+	isexist, err := u.repo.IsExist(ctx, account)
+	if err != nil {
 		return nil, err
-	} else if isexist {
+	}
+	if isexist {
 		return nil, ErrAccountAlreadyExist
 	}
+
+	pswdhash, err := u.passwordhasher.Hash(account.Password)
+	if err != nil {
+		return nil, err
+	}
+	account.Password = pswdhash
+
 	newaccount, err := u.repo.Create(ctx, account)
 	if err != nil {
 		return nil, err
 	}
 
-	token, err := u.secure.Encrypt(newaccount)
-	if err != nil {
-		return nil, err
-	}
-
-	return &AccountCreateResult{
-		Account: newaccount,
-		Token:   token,
-	}, nil
+	return newaccount, nil
 }
 
 func (u *Account) Valid(email, password string) error {
