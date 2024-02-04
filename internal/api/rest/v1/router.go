@@ -3,16 +3,19 @@ package v1
 import (
 	"errors"
 	"github.com/alexsibrin/runbot-auth/internal/api/rest/v1/handlers"
-	"github.com/alexsibrin/runbot-auth/internal/api/rest/v1/middlewares"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
 
 const (
-	v1path      = "/v1"
-	SignUpPath  = "/signup"
-	SignInPath  = "/signin"
-	RefreshPath = "/token"
+	v1path     = "/v1"
+	SignUpPath = "/signup"
+	SignInPath = "/signin"
+
+	AccountPath = "/account"
+
+	VersionPath = "/version"
+	HealthPath  = "/health"
 )
 
 var (
@@ -23,11 +26,11 @@ var (
 
 type Handlers struct {
 	Account *handlers.Account
+	Common  *handlers.Common
 }
 
 type DependenciesRouter struct {
-	Handlers    *Handlers
-	Middlewares *middlewares.Middlewares
+	Handlers *Handlers
 }
 
 func NewRouter(dep *DependenciesRouter) (http.Handler, error) {
@@ -51,10 +54,14 @@ func NewRouter(dep *DependenciesRouter) (http.Handler, error) {
 	// Creating router 1st version
 	router := rootrouter.Group(v1path)
 
+	// Common handlers
+	router.GET(VersionPath, dep.Handlers.Common.Version)
+	router.GET(HealthPath, dep.Handlers.Common.Health)
+
 	// Account handlers
+	router.GET(AccountPath, dep.Handlers.Account.GetOne)
 	router.POST(SignUpPath, dep.Handlers.Account.SignUp)
 	router.POST(SignInPath, dep.Handlers.Account.SignIn)
-	router.POST(RefreshPath, dep.Handlers.Account.Refresh)
 
 	return rootrouter, nil
 }
