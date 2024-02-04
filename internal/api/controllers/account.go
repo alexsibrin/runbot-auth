@@ -5,31 +5,26 @@ import (
 	"github.com/alexsibrin/runbot-auth/internal/api/models"
 	"github.com/alexsibrin/runbot-auth/internal/api/validators"
 	"github.com/alexsibrin/runbot-auth/internal/entities"
-	// FIXME: WTF
 	"github.com/alexsibrin/runbot-auth/internal/usecases"
-	// FIXME: END WTF
 	"github.com/google/uuid"
 	"time"
 )
-
-// TODO: create the create struct inside the use case
 
 const (
 	accountControllerKey = "Account"
 )
 
 type IAccountUsecase interface {
-	Create(ctx context.Context, r *usecases.AccountCreateRequest) (*entities.Account, error)
-	SignIn(ctx context.Context, email, pswd string) (*entities.Token, error)
-	SignUp(ctx context.Context, r *usecases.AccountCreateRequest) (*usecases.AccountCreateResult, error)
-	GetOne(ctx context.Context, uuid string) (*entities.Account, error)
+	SignIn(ctx context.Context, email, pswd string) (*entities.Account, error)
+	SignUp(ctx context.Context, r *entities.Account) (*entities.Account, error)
+	GetOneByEmail(ctx context.Context, uuid string) (*entities.Account, error)
+	GetOneByUUID(ctx context.Context, uuid string) (*entities.Account, error)
 }
 
 type ISecurer interface {
-	Encrypt(account *entities.Account) (*models.Token, error)
-	Decrypt(token *models.Token) (*entities.Account, error)
-	Valid(token entities.RefreshToken) error
-	Refresh(token *entities.Token) (*models.Token, error)
+	AccessToken(account *entities.Account) (string, error)
+	RefreshToken(account *entities.Account) (string, error)
+	Decrypt(token string) (*entities.Account, error)
 }
 
 type AccountDependencies struct {
@@ -58,25 +53,7 @@ func NewAccount(d *AccountDependencies) (*Account, error) {
 	}, nil
 }
 
-func (c *Account) SignIn(ctx context.Context, model *models.SignIn) (*models.Token, error) {
-	if err := validators.Email(model.Email); err != nil {
-		return nil, err
-	}
-	if err := validators.Password(model.Password); err != nil {
-		return nil, err
-	}
-
-	token, err := c.usecase.SignIn(ctx, model.Email, model.Password)
-	if err != nil {
-		return nil, err
-	}
-
-	result := c.entityToken2Model(token)
-
-	return result, nil
-}
-
-func (c *Account) SignUp(ctx context.Context, model *models.AccountCreate) (*models.AccountCreateResponse, error) {
+func (c *Account) SignUp(ctx context.Context, model *models.SignUp) (*models.SignUpResponse, error) {
 	if err := validators.Email(model.Email); err != nil {
 		return nil, err
 	}
@@ -87,56 +64,48 @@ func (c *Account) SignUp(ctx context.Context, model *models.AccountCreate) (*mod
 		return nil, err
 	}
 
-	newaccount := c.accountCreateModel2UsecaseCreateRequest(model)
+	newaccount := c.accountCreateModel2Entity(model)
 
 	usecaseresult, err := c.usecase.SignUp(ctx, newaccount)
 	if err != nil {
 		return nil, err
 	}
 
-	result := c.accountEntity2AccountCreateResponse(usecaseresult)
+	token, err := c.createToken(usecaseresult)
+	if err != nil {
+		return nil, err
+	}
+
+	result := c.accountEntity2SignUpResponse(usecaseresult, token)
+
 	return result, nil
 }
 
-func (c *Account) Create(ctx context.Context, model *models.AccountCreate) (*models.Account, error) {
+func (c *Account) SignIn(ctx context.Context, model *models.SignIn) (*models.SignInResponse, error) {
 	if err := validators.Email(model.Email); err != nil {
 		return nil, err
 	}
 	if err := validators.Password(model.Password); err != nil {
 		return nil, err
 	}
-	if err := validators.Name(model.Name); err != nil {
-		return nil, err
-	}
 
-	newaccount := c.accountCreateModel2UsecaseCreateRequest(model)
-
-	usecaseresult, err := c.usecase.Create(ctx, newaccount)
+	account, err := c.usecase.SignIn(ctx, model.Email, model.Password)
 	if err != nil {
 		return nil, err
 	}
 
-	result := c.accountEntity2AccountModel(usecaseresult)
+	token, err := c.createToken(account)
+	if err != nil {
+		return nil, err
+	}
+
+	result := c.accountEntity2SignInResponse(account, token)
+
 	return result, nil
 }
 
-func (c *Account) RefreshToken(ctx context.Context, token *models.Token) (*models.Token, error) {
-	acc, err := c.securer.Decrypt(token)
-	if err != nil {
-		return nil, err
-	}
-
-	// TODO: redo
-	entoken, err := c.usecase.SignIn(ctx, acc.Email, acc.Password)
-	if err != nil {
-		return nil, err
-	}
-
-	return c.entityToken2Model(entoken), nil
-}
-
-func (c *Account) GetOne(ctx context.Context, uuid string) (*models.AccountGetModel, error) {
-	acc, err := c.usecase.GetOne(ctx, uuid)
+func (c *Account) GetOneByEmail(ctx context.Context, email string) (*models.AccountGetModel, error) {
+	acc, err := c.usecase.GetOneByEmail(ctx, email)
 	if err != nil {
 		return nil, err
 	}
@@ -144,7 +113,16 @@ func (c *Account) GetOne(ctx context.Context, uuid string) (*models.AccountGetMo
 	return result, nil
 }
 
-func (c *Account) accountCreateModel2Entity(acc *models.AccountCreate) *entities.Account {
+func (c *Account) GetOneByUUID(ctx context.Context, uuid string) (*models.AccountGetModel, error) {
+	acc, err := c.usecase.GetOneByUUID(ctx, uuid)
+	if err != nil {
+		return nil, err
+	}
+	result := c.accountEntity2AccountGetModel(acc)
+	return result, nil
+}
+
+func (c *Account) accountCreateModel2Entity(acc *models.SignUp) *entities.Account {
 	return &entities.Account{
 		UUID:      uuid.NewString(),
 		Email:     acc.Email,
@@ -162,32 +140,21 @@ func (c *Account) accountCreateModel2UsecaseCreateRequest(acc *models.AccountCre
 	}
 }
 
-func (c *Account) accountEntity2AccountCreateResponse(res *usecases.AccountCreateResult) *models.AccountCreateResponse {
-	return &models.AccountCreateResponse{
-		Account: c.accountEntity2model(res.Account),
-		Token:   c.entityToken2Model(res.Token),
+func (c *Account) accountEntity2SignUpResponse(acc *entities.Account, token *models.Token) *models.SignUpResponse {
+	return &models.SignUpResponse{
+		Account: c.accountEntity2model(acc),
+		Token:   token,
+	}
+}
+
+func (c *Account) accountEntity2SignInResponse(acc *entities.Account, token *models.Token) *models.SignInResponse {
+	return &models.SignInResponse{
+		Account: c.accountEntity2model(acc),
+		Token:   token,
 	}
 }
 
 func (c *Account) accountEntity2model(acc *entities.Account) *models.Account {
-	return &models.Account{
-		UUID:      acc.UUID,
-		Email:     acc.Email,
-		Password:  acc.Password,
-		Name:      acc.Name,
-		CreatedAt: acc.CreatedAt,
-		UpdatedAt: acc.UpdatedAt,
-	}
-}
-
-func (c *Account) entityToken2Model(token *entities.Token) *models.Token {
-	return &models.Token{
-		Access:  string(token.Access),
-		Refresh: string(token.Refresh),
-	}
-}
-
-func (c *Account) accountEntity2AccountModel(acc *entities.Account) *models.Account {
 	return &models.Account{
 		UUID:      acc.UUID,
 		Email:     acc.Email,
@@ -206,4 +173,21 @@ func (c *Account) accountEntity2AccountGetModel(acc *entities.Account) *models.A
 		CreatedAt: acc.CreatedAt,
 		UpdatedAt: acc.UpdatedAt,
 	}
+}
+
+func (c *Account) createToken(a *entities.Account) (*models.Token, error) {
+	atoken, err := c.securer.AccessToken(a)
+	if err != nil {
+		return nil, err
+	}
+
+	rtoken, err := c.securer.RefreshToken(a)
+	if err != nil {
+		return nil, err
+	}
+
+	return &models.Token{
+		Access:  atoken,
+		Refresh: rtoken,
+	}, nil
 }
