@@ -4,6 +4,5 @@
 # binary
 /bin
 
-#config and credentials
-credentials.yaml
+#config
 config.yaml
