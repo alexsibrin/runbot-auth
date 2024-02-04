@@ -1,0 +1,8 @@
+# IDE files
+/.idea
+
+# binary
+/bin
+
+# any yaml configs
+*.yaml
