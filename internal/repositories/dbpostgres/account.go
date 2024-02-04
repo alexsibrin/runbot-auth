@@ -47,9 +47,9 @@ func (r *Account) Create(ctx context.Context, account *entities.Account) (*entit
 	return r.repo2entity(repoaccount), err
 }
 
-func (r *Account) GetOne(ctx context.Context, email string) (*entities.Account, error) {
+func (r *Account) GetOneByEmail(ctx context.Context, email string) (*entities.Account, error) {
 	query := `
-		SELECT UUID, Email, Password, Name, CreatedAt, UpdatedAt FROM accounts
+		SELECT DISTINCT UUID, Email, Password, Name, CreatedAt, UpdatedAt FROM accounts
 		WHERE Email=$1;
 	`
 
@@ -61,6 +61,27 @@ func (r *Account) GetOne(ctx context.Context, email string) (*entities.Account, 
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
 		return nil, repositories.NewErrAccountNotFound(email)
+	case err != nil:
+		return nil, err
+	default:
+		return &account, nil
+	}
+}
+
+func (r *Account) GetOneByUUID(ctx context.Context, uuid string) (*entities.Account, error) {
+	query := `
+		SELECT DISTINCT UUID, Email, Password, Name, CreatedAt, UpdatedAt FROM accounts
+		WHERE UUID=$1;
+	`
+
+	var account entities.Account
+
+	err := r.db.QueryRowContext(ctx, query, uuid).
+		Scan(&account.UUID, &account.Email, &account.Password, &account.Name, &account.CreatedAt, &account.UpdatedAt)
+
+	switch {
+	case errors.Is(err, sql.ErrNoRows):
+		return nil, repositories.NewErrAccountNotFound(uuid)
 	case err != nil:
 		return nil, err
 	default:
