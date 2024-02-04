@@ -11,8 +11,9 @@ const (
 	nameMinLength  = 4
 
 	emailRegexp = `^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$`
-	pswdRegexp  = `^(?=.*[A-Za-z])(?=.*\d).{8,}$`
-	nameRegexp  = `^[a-zA-Z0-9]{4,30}$`
+	// FIXME: reg is not correct
+	pswdRegexp = `^[A-Za-z0-9].{8,}$`
+	nameRegexp = `^[a-zA-Z0-9]{4,30}$`
 )
 
 var (
