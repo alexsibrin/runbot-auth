@@ -11,6 +11,8 @@ import (
 	"github.com/alexsibrin/runbot-auth/internal/api/rpc"
 	handlersrpc "github.com/alexsibrin/runbot-auth/internal/api/rpc/handlers"
 	"github.com/alexsibrin/runbot-auth/internal/config"
+	"github.com/alexsibrin/runbot-auth/internal/hasher"
+	"github.com/alexsibrin/runbot-auth/internal/jwtapp"
 	"github.com/alexsibrin/runbot-auth/internal/logapp"
 	"github.com/alexsibrin/runbot-auth/internal/repositories/dbpostgres"
 	"github.com/alexsibrin/runbot-auth/internal/usecases"
@@ -22,19 +24,20 @@ import (
 )
 
 func main() {
+
 	log.Println("-------> App is starting the initialization...")
 
 	// Init config
-	conf, err := config.New(config.YamlInitKey)
+	conf, err := config.New(config.EnvInitKey)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// init logger
 	logger := logapp.NewLogger(&logapp.Config{
-		Level:         conf.Level,
-		Colors:        conf.Colors,
-		FullTimestamp: conf.FullTimestamp,
+		Level:         conf.Logger.Level,
+		Colors:        conf.Logger.Colors,
+		FullTimestamp: conf.Logger.FullTimestamp,
 	})
 	defer logger.Info("App is stopped.")
 
@@ -52,10 +55,26 @@ func main() {
 	}
 
 	accountrepo, err := dbpostgres.NewAccount(db)
+	if err != nil {
+		logger.Fatal(err)
+	}
+
+	// Init hasher
+	stringHasher := hasher.NewStringHasher()
+
+	// Init jwtapp
+	appsec := jwtapp.New(&jwtapp.Config{
+		Salt:      conf.Jwt.Salt,
+		Issuer:    conf.Jwt.Issuer,
+		Subject:   conf.Jwt.Subject,
+		Audience:  conf.Jwt.Audience,
+		ExpiresIn: conf.Jwt.ExpiresIn,
+	})
 
 	// init usecases
 	accountusecase, err := usecases.NewAccount(&usecases.AccountDependencies{
-		Repo: accountrepo,
+		Repo:           accountrepo,
+		PasswordHasher: stringHasher,
 	})
 	if err != nil {
 		logger.Fatal(err)
@@ -64,7 +83,11 @@ func main() {
 	// init controllers
 	accountcontroller, err := controllers.NewAccount(&controllers.AccountDependencies{
 		Usecase: accountusecase,
+		Securer: appsec,
 	})
+	if err != nil {
+		logger.Fatal(err)
+	}
 
 	// init REST handlers, middlewares, router
 	accounthandlers, err := handlersrest.NewAccount(&handlersrest.DependenciesAccount{
@@ -76,9 +99,18 @@ func main() {
 		logger.Fatal(err)
 	}
 
+	commonhandlers, err := handlersrest.NewCommon(&handlersrest.DependenciesCommon{
+		Health:  conf.Common.Health,
+		Version: conf.Common.Version,
+	})
+	if err != nil {
+		logger.Fatal(err)
+	}
+
 	router, err := restv1.NewRouter(&restv1.DependenciesRouter{
 		Handlers: &restv1.Handlers{
 			Account: accounthandlers,
+			Common:  commonhandlers,
 		},
 	})
 	if err != nil {
@@ -106,10 +138,13 @@ func main() {
 		logger.Fatal(err)
 	}
 
-	grpcserver, err := rpc.NewServer(&rpc.Config{})
+	grpcserver, err := rpc.NewServer(&rpc.Config{
+		Port: conf.GRPCServer.Port,
+	})
 	if err != nil {
 		logger.Fatal(err)
 	}
+
 	grpcserver.Add(accountrpchandlers)
 
 	// Init graceful shutdown
@@ -122,6 +157,7 @@ func main() {
 	go func() {
 		err := restserver.Run(ctx)
 		if err != nil {
+			logger.Error(fmt.Errorf("rest server got the error: %w", err))
 			stop()
 		}
 		wg.Done()
@@ -131,12 +167,13 @@ func main() {
 	go func() {
 		err := grpcserver.Run(ctx)
 		if err != nil {
+			logger.Error(fmt.Errorf("grpc server got the error: %w", err))
 			stop()
 		}
 		wg.Done()
 	}()
 
-	logger.Info("App is running.")
+	logger.Info("App is running...")
 	<-ctx.Done()
 
 	if !errors.Is(ctx.Err(), context.Canceled) {
