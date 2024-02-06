@@ -8,6 +8,8 @@ import (
 	"time"
 )
 
+//go:generate mockgen -destination mocks/mock_usecases.go -package usecases_test github.com/alexsibrin/runbot-auth/internal/usecases IPasswordHasher,IAccountRepo
+
 var (
 	ErrDependenciesAreNil  = errors.New("dependencies are nil")
 	ErrPaswordHasherIsNil  = errors.New("dependency password hasher is nil")
@@ -117,14 +119,6 @@ func (u *Account) SignUp(ctx context.Context, account *entities.Account) (*entit
 	}
 
 	return newaccount, nil
-}
-
-func (u *Account) Valid(email, password string) error {
-	return nil
-}
-
-func (u *Account) IsExist(email string) error {
-	return nil
 }
 
 func (u *Account) createReq2Entity(r *AccountCreateRequest) *entities.Account {
