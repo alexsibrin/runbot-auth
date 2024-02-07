@@ -270,8 +270,16 @@ func TestCreate(t *testing.T) {
 	mockRepo := usecases_test.NewMockIAccountRepo(ctrl)
 
 	ctx := context.TODO()
-	testAccount := &entities.Account{} // Populate with necessary fields for your test
-	testReq := &AccountCreateRequest{} // Populate with necessary fields for your test
+	testAccount := &entities.Account{
+		Email:    "myemail",
+		Name:     "My name is",
+		Password: "mypassword",
+	} // Populate with necessary fields for your test
+	testReq := &AccountCreateRequest{
+		Email:    testAccount.Email,
+		Name:     testAccount.Name,
+		Password: testAccount.Password,
+	} // Populate with necessary fields for your test
 
 	tests := []struct {
 		name        string

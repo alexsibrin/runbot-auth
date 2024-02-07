@@ -3,6 +3,7 @@ package usecases
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/alexsibrin/runbot-auth/internal/entities"
 	"github.com/google/uuid"
 	"time"
@@ -90,6 +91,7 @@ func (u *Account) GetOneByUUID(ctx context.Context, uuid string) (*entities.Acco
 
 func (u *Account) Create(ctx context.Context, r *AccountCreateRequest) (*entities.Account, error) {
 	account := u.createReq2Entity(r)
+	fmt.Printf("%+v \n", account)
 	if isexist, err := u.repo.IsExist(ctx, account); err != nil {
 		return nil, err
 	} else if isexist {
