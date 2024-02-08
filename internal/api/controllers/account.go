@@ -14,6 +14,7 @@ const (
 	accountControllerKey = "Account"
 )
 
+//go:generate mockgen -destination ./mocks/mocks_controllers.go -package controllers_test github.com/alexsibrin/runbot-auth/internal/api/controllers IAccountUsecase,ISecurer
 type IAccountUsecase interface {
 	SignIn(ctx context.Context, email, pswd string) (*entities.Account, error)
 	SignUp(ctx context.Context, r *entities.Account) (*entities.Account, error)

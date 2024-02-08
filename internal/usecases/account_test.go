@@ -251,12 +251,13 @@ func TestGetOneByUUID(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			tc.setupMocks()
 			account := &Account{repo: mockRepo}
-			_, err := account.GetOneByUUID(ctx, tc.uuid)
+			acc, err := account.GetOneByUUID(ctx, tc.uuid)
 
 			if tc.expectedErr != nil {
 				assert.Error(t, err)
 				assert.EqualError(t, err, tc.expectedErr.Error())
 			} else {
+				assert.IsType(t, &entities.Account{}, acc)
 				assert.NoError(t, err)
 			}
 		})
