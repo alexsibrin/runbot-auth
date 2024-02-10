@@ -8,11 +8,3 @@ type Account struct {
 	CreatedAt int64
 	UpdatedAt int64
 }
-
-type AccessToken string
-type RefreshToken string
-
-type Token struct {
-	Access  AccessToken
-	Refresh RefreshToken
-}

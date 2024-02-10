@@ -106,6 +106,9 @@ func (c *Account) SignIn(ctx context.Context, model *models.SignIn) (*models.Sig
 }
 
 func (c *Account) GetOneByEmail(ctx context.Context, email string) (*models.AccountGetModel, error) {
+	if err := validators.Email(email); err != nil {
+		return nil, err
+	}
 	acc, err := c.usecase.GetOneByEmail(ctx, email)
 	if err != nil {
 		return nil, err

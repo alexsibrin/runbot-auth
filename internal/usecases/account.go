@@ -24,11 +24,6 @@ type AccountCreateRequest struct {
 	Password string
 }
 
-type AccountCreateResult struct {
-	Account *entities.Account
-	Token   *entities.Token
-}
-
 type IPasswordHasher interface {
 	Hash(str string) (string, error)
 	Compare(str, hash string) error
@@ -81,25 +76,6 @@ func (u *Account) SignIn(ctx context.Context, email, pswd string) (*entities.Acc
 	return account, nil
 }
 
-func (u *Account) GetOneByEmail(ctx context.Context, email string) (*entities.Account, error) {
-	return u.repo.GetOneByEmail(ctx, email)
-}
-
-func (u *Account) GetOneByUUID(ctx context.Context, uuid string) (*entities.Account, error) {
-	return u.repo.GetOneByUUID(ctx, uuid)
-}
-
-func (u *Account) Create(ctx context.Context, r *AccountCreateRequest) (*entities.Account, error) {
-	account := u.createReq2Entity(r)
-	fmt.Printf("%+v \n", account)
-	if isexist, err := u.repo.IsExist(ctx, account); err != nil {
-		return nil, err
-	} else if isexist {
-		return nil, ErrAccountAlreadyExist
-	}
-	return u.repo.Create(ctx, account)
-}
-
 func (u *Account) SignUp(ctx context.Context, account *entities.Account) (*entities.Account, error) {
 	isexist, err := u.repo.IsExist(ctx, account)
 	if err != nil {
@@ -121,6 +97,25 @@ func (u *Account) SignUp(ctx context.Context, account *entities.Account) (*entit
 	}
 
 	return newaccount, nil
+}
+
+func (u *Account) GetOneByEmail(ctx context.Context, email string) (*entities.Account, error) {
+	return u.repo.GetOneByEmail(ctx, email)
+}
+
+func (u *Account) GetOneByUUID(ctx context.Context, uuid string) (*entities.Account, error) {
+	return u.repo.GetOneByUUID(ctx, uuid)
+}
+
+func (u *Account) Create(ctx context.Context, r *AccountCreateRequest) (*entities.Account, error) {
+	account := u.createReq2Entity(r)
+	fmt.Printf("%+v \n", account)
+	if isexist, err := u.repo.IsExist(ctx, account); err != nil {
+		return nil, err
+	} else if isexist {
+		return nil, ErrAccountAlreadyExist
+	}
+	return u.repo.Create(ctx, account)
 }
 
 func (u *Account) createReq2Entity(r *AccountCreateRequest) *entities.Account {
