@@ -12,7 +12,8 @@ const (
 	SignUpPath = "/signup"
 	SignInPath = "/signin"
 
-	AccountPath = "/account"
+	AccountPath  = "/account"
+	RefreshToken = "/refresh"
 
 	VersionPath = "/version"
 	HealthPath  = "/health"
@@ -60,6 +61,7 @@ func NewRouter(dep *DependenciesRouter) (http.Handler, error) {
 
 	// Account handlers
 	router.GET(AccountPath, dep.Handlers.Account.GetOne)
+	router.GET(RefreshToken, dep.Handlers.Account.RefreshToken)
 	router.POST(SignUpPath, dep.Handlers.Account.SignUp)
 	router.POST(SignInPath, dep.Handlers.Account.SignIn)
 

@@ -126,6 +126,19 @@ func (c *Account) GetOneByUUID(ctx context.Context, uuid string) (*models.Accoun
 	return result, nil
 }
 
+func (c *Account) RefreshToken(_ context.Context, token string) (string, error) {
+	account, err := c.securer.Decrypt(token)
+	if err != nil {
+		return "", err
+	}
+	// TODO: ??? to add verif in the Usecase
+	rtoken, err := c.securer.RefreshToken(account)
+	if err != nil {
+		return "", err
+	}
+	return rtoken, nil
+}
+
 func (c *Account) accountCreateModel2Entity(acc *models.SignUp) *entities.Account {
 	return &entities.Account{
 		UUID:      uuid.NewString(),

@@ -7,13 +7,15 @@ import (
 	"github.com/alexsibrin/runbot-auth/internal/api/validators"
 	"github.com/alexsibrin/runbot-auth/internal/logapp"
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/sirupsen/logrus"
 	"io"
 	"net/http"
 )
 
 const (
-	accountHandlerKey = "Account"
+	accountHandlerKey     = "Account"
+	refreshTokenCookieKey = "rt"
 )
 
 type IAccountController interface {
@@ -21,6 +23,7 @@ type IAccountController interface {
 	SignUp(ctx context.Context, model *models.SignUp) (*models.SignUpResponse, error)
 	GetOneByEmail(ctx context.Context, email string) (*models.AccountGetModel, error)
 	GetOneByUUID(ctx context.Context, uuid string) (*models.AccountGetModel, error)
+	RefreshToken(_ context.Context, token string) (string, error)
 }
 
 type DependenciesAccount struct {
@@ -76,7 +79,7 @@ func (h *Account) SignIn(g *gin.Context) {
 		return
 	}
 
-	h.addTokenToCookie(g, reponsemodel.Token)
+	h.addTokenToCookie(g, reponsemodel.Token.Refresh)
 
 	g.JSON(http.StatusOK, reponsemodel)
 }
@@ -97,7 +100,7 @@ func (h *Account) SignUp(g *gin.Context) {
 		return
 	}
 
-	h.addTokenToCookie(g, reponsemodel.Token)
+	h.addTokenToCookie(g, reponsemodel.Token.Refresh)
 
 	g.JSON(http.StatusOK, reponsemodel)
 }
@@ -128,8 +131,29 @@ func (h *Account) GetOneByUUID(g *gin.Context) {
 	g.JSON(http.StatusOK, account)
 }
 
-func (h *Account) addTokenToCookie(g *gin.Context, token *models.Token) {
-	g.SetCookie("rt", token.Refresh, 36000, "", "", true, true)
+func (h *Account) RefreshToken(g *gin.Context) {
+	logger := h.logger.WithField(methodKey, "RefreshToken")
+	token, err := h.getTokenFromCookie(g)
+	if err != nil {
+		h.handleError(g, logger, ErrDidntGetRefreshToken)
+		return
+	}
+	newtoken, err := h.controller.RefreshToken(g, token)
+	if err != nil {
+		h.handleError(g, logger, err)
+		return
+	}
+	h.addTokenToCookie(g, newtoken)
+	g.JSON(http.StatusOK, "ok")
+}
+
+func (h *Account) addTokenToCookie(g *gin.Context, token string) {
+	// TODO: ??? Move to config
+	g.SetCookie(refreshTokenCookieKey, token, 36000, "", "", true, true)
+}
+
+func (h *Account) getTokenFromCookie(g *gin.Context) (string, error) {
+	return g.Cookie(refreshTokenCookieKey)
 }
 
 func (h *Account) handleError(g *gin.Context, logger logrus.FieldLogger, err error) {
@@ -150,9 +174,19 @@ func (h *Account) getErrorMessage(err error) string {
 
 func (h *Account) getStatusCode(err error) int {
 	switch {
-	case errors.Is(err, validators.ErrEmailIsTooShort) || errors.Is(err, validators.ErrPasswordIsTooShort):
+	case errors.Is(err, validators.ErrEmailIsTooShort):
 		return http.StatusBadRequest
-	case errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF):
+	case errors.Is(err, validators.ErrPasswordIsTooShort):
+		return http.StatusBadRequest
+	case errors.Is(err, io.EOF):
+		return http.StatusBadRequest
+	case errors.Is(err, io.ErrUnexpectedEOF):
+		return http.StatusBadRequest
+	case errors.Is(err, ErrDidntGetRefreshToken):
+		return http.StatusBadRequest
+	case errors.Is(err, jwt.ErrTokenSignatureInvalid):
+		return http.StatusBadRequest
+	case errors.Is(err, jwt.ErrHashUnavailable):
 		return http.StatusBadRequest
 	default:
 		return http.StatusInternalServerError

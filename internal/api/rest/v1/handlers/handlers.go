@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
 )
@@ -8,6 +9,10 @@ import (
 const (
 	handlerKey = "rest_handler"
 	methodKey  = "method"
+)
+
+var (
+	ErrDidntGetRefreshToken = errors.New("could't find refresh token in the headers")
 )
 
 type ErrUnitIsNil struct {
