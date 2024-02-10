@@ -9,6 +9,7 @@ import (
 	"github.com/alexsibrin/runbot-auth/internal/api/validators"
 	"github.com/alexsibrin/runbot-auth/internal/entities"
 	"github.com/alexsibrin/runbot-auth/internal/usecases"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	"golang.org/x/crypto/bcrypt"
@@ -325,4 +326,64 @@ func TestGetOneByUUID(t *testing.T) {
 
 		})
 	}
+}
+
+func TestRefreshToken(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	securer := controllers_test.NewMockISecurer(ctrl)
+
+	ctx := context.TODO()
+
+	testCases := []struct {
+		name        string
+		in          string
+		setupMocks  func()
+		expectedErr error
+	}{
+		{
+			name: "Valid case",
+			in:   "sometoken",
+			setupMocks: func() {
+				securer.EXPECT().Decrypt(gomock.Any()).Return(&entities.Account{}, nil)
+				securer.EXPECT().RefreshToken(gomock.Any()).Return("newtoken", nil)
+			},
+			expectedErr: nil,
+		},
+		{
+			name: "Wrong token signature",
+			in:   "somewrongtoken",
+			setupMocks: func() {
+				securer.EXPECT().Decrypt(gomock.Any()).Return(nil, jwt.ErrTokenSignatureInvalid)
+			},
+			expectedErr: jwt.ErrTokenSignatureInvalid,
+		},
+		{
+			name: "Wrong token hash",
+			in:   "somewrongtoken",
+			setupMocks: func() {
+				securer.EXPECT().Decrypt(gomock.Any()).Return(nil, jwt.ErrHashUnavailable)
+			},
+			expectedErr: jwt.ErrHashUnavailable,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.setupMocks()
+			account := &Account{
+				securer: securer,
+			}
+			token, err := account.RefreshToken(ctx, tc.in)
+			if tc.expectedErr != nil {
+				assert.Error(t, err)
+				assert.ErrorIs(t, err, tc.expectedErr)
+			} else {
+				assert.NoError(t, err)
+				assert.NotEmpty(t, token)
+			}
+		})
+	}
+
 }
