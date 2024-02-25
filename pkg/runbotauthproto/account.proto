@@ -10,7 +10,7 @@ message GetAccountResponse {
   string UUID = 1;
   string Name = 2;
   string Email = 3;
-  reserved 4, 15;
+  reserved 4 to 15;
   int64 CreatedAt = 16;
 }
 
@@ -25,14 +25,8 @@ message AccountCreateResponse {
   string Name = 2;
   string Email = 3;
   string Password = 4;
-  reserved 5, 15;
+  reserved 5 to 15;
   int64 CreatedAt = 16;
-  Token Token = 17;
-}
-
-message Token {
-  string Access = 1;
-  string Refresh = 2;
 }
 
 service Account {
