@@ -11,7 +11,6 @@ import (
 
 const (
 	EnvInitKey = "env"
-	envPref    = "APP"
 
 	YamlInitKey = "yaml"
 	configPath  = "."
