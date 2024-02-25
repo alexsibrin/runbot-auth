@@ -2,6 +2,7 @@ package usecases
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"github.com/alexsibrin/runbot-auth/internal/entities"
@@ -16,6 +17,9 @@ var (
 	ErrPaswordHasherIsNil  = errors.New("dependency password hasher is nil")
 	ErrAccountRepoIsNil    = errors.New("dependency account repo is nil")
 	ErrAccountAlreadyExist = errors.New("account already exists")
+	ErrDataIsWrong         = errors.New("data is wrong")
+	ErrEmailIsWrong        = errors.New("data is wrong")
+	ErrPasswordIsWrong     = errors.New("data is wrong")
 )
 
 type AccountCreateRequest struct {
@@ -65,12 +69,15 @@ func NewAccount(d *AccountDependencies) (*Account, error) {
 func (u *Account) SignIn(ctx context.Context, email, pswd string) (*entities.Account, error) {
 	account, err := u.repo.GetOneByEmail(ctx, email)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrEmailIsWrong
+		}
 		return nil, err
 	}
 
 	err = u.passwordhasher.Compare(pswd, account.Password)
 	if err != nil {
-		return nil, err
+		return nil, ErrPasswordIsWrong
 	}
 
 	return account, nil
