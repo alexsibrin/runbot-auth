@@ -6,6 +6,7 @@ import (
 	"github.com/alexsibrin/runbot-auth/internal/api/models"
 	"github.com/alexsibrin/runbot-auth/internal/api/validators"
 	"github.com/alexsibrin/runbot-auth/internal/logapp"
+	"github.com/alexsibrin/runbot-auth/internal/usecases"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/sirupsen/logrus"
@@ -18,6 +19,7 @@ const (
 	refreshTokenCookieKey = "rt"
 )
 
+//go:generate mockgen -destination mocks/resthandlers_mocks.go -package resthandlers_test github.com/alexsibrin/runbot-auth/internal/api/rest/v1/handlers IAccountController
 type IAccountController interface {
 	SignIn(ctx context.Context, model *models.SignIn) (*models.SignInResponse, error)
 	SignUp(ctx context.Context, model *models.SignUp) (*models.SignUpResponse, error)
@@ -27,13 +29,11 @@ type IAccountController interface {
 }
 
 type DependenciesAccount struct {
-	CookieKey         string
 	AccountController IAccountController
 	Logger            logapp.ILogger
 }
 
 type Account struct {
-	cookiekey  string
 	controller IAccountController
 	logger     logapp.ILogger
 }
@@ -49,15 +49,11 @@ func NewAccount(dep *DependenciesAccount) (*Account, error) {
 	if dep.Logger == nil {
 		return nil, NewErrUnitIsNil("dep Account logger")
 	}
-	if dep.CookieKey == "" {
-		return nil, NewErrUnitIsNil("cookie key")
-	}
 
 	logger := dep.Logger
 	logger = logger.WithField(handlerKey, accountHandlerKey)
 
 	return &Account{
-		cookiekey:  dep.CookieKey,
 		controller: dep.AccountController,
 		logger:     logger,
 	}, nil
@@ -148,7 +144,6 @@ func (h *Account) RefreshToken(g *gin.Context) {
 }
 
 func (h *Account) addTokenToCookie(g *gin.Context, token string) {
-	// TODO: ??? Move to config
 	g.SetCookie(refreshTokenCookieKey, token, 36000, "", "", true, true)
 }
 
@@ -167,6 +162,8 @@ func (h *Account) getErrorMessage(err error) string {
 	switch {
 	case errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF):
 		return "wrong input data, please check the model"
+	case errors.Is(err, usecases.ErrEmailIsWrong) || errors.Is(err, usecases.ErrPasswordIsWrong):
+		return "input data is wrong"
 	default:
 		return err.Error()
 	}
@@ -187,6 +184,8 @@ func (h *Account) getStatusCode(err error) int {
 	case errors.Is(err, jwt.ErrTokenSignatureInvalid):
 		return http.StatusBadRequest
 	case errors.Is(err, jwt.ErrHashUnavailable):
+		return http.StatusBadRequest
+	case errors.Is(err, usecases.ErrDataIsWrong):
 		return http.StatusBadRequest
 	default:
 		return http.StatusInternalServerError
