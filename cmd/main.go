@@ -28,7 +28,7 @@ func main() {
 	log.Println("-------> App is starting the initialization...")
 
 	// Init config
-	conf, err := config.New(config.EnvInitKey)
+	conf, err := config.New(config.YamlInitKey)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -93,7 +93,6 @@ func main() {
 	accounthandlers, err := handlersrest.NewAccount(&handlersrest.DependenciesAccount{
 		AccountController: accountcontroller,
 		Logger:            logger,
-		CookieKey:         "s",
 	})
 	if err != nil {
 		logger.Fatal(err)
