@@ -1,0 +1,41 @@
+version: "3.8"
+services:
+  runbotauth:
+    networks:
+      - runbotauthnetwork
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: runbotauth
+    configs:
+      - general_config
+    ports:
+      - "8080:8080" # http//
+      - "8081:8081" # grpc
+    depends_on:
+      postgresdb:
+        condition: service_healthy
+    restart: always
+  postgresdb:
+    image: postgres:15
+    container_name: runbotauthdb
+    environment:
+      POSTGRES_DB: runbotdb
+      POSTGRES_USER: runbot_user
+      POSTGRES_PASSWORD: runbotpswd
+    healthcheck:
+      test: pg_isready -U runbot_user -d runbotdb
+      interval: 2s
+      timeout: 3s
+      retries: 10
+    networks:
+      - runbotauthnetwork
+    ports:
+      - "5432:5432"
+networks:
+  runbotauthnetwork:
+    driver: bridge
+
+configs:
+  general_config:
+    file: config.yaml
