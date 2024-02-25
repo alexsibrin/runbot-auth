@@ -1,25 +1,21 @@
-FROM golang:1.21.6-bullseye AS build
+FROM golang:1.21.7-alpine3.19 AS build
 LABEL authors="Alex Sibrin"
 
 WORKDIR /temp
 
 COPY . .
 
-EXPOSE 8081/tcp \
-       8088/tcp \
-       5432/tcp
-
 RUN go get ./... && go build -o bin/app ./cmd/main.go
 
-FROM debian:12-slim
+FROM alpine:3.19.1
 LABEL authors="Alex Sibrin"
 
 ENV GIN_MODE=release \
     COMMON_VERSION=1.0.1 \
     COMMON_HEALTH="I'm okay" \
     RESTSERVER_HOST=0.0.0.0 \
-    RESTSERVER_PORT=8081 \
-    GRPCSERVER_PORT=8088 \
+    RESTSERVER_PORT=8080 \
+    GRPCSERVER_PORT=8081 \
     POSTGRESQL_DB=runbotdb \
     POSTGRESQL_HOST=host.docker.internal \
     POSTGRESQL_PORT=5432 \
