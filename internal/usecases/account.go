@@ -2,10 +2,9 @@ package usecases
 
 import (
 	"context"
-	"database/sql"
 	"errors"
-	"fmt"
 	"github.com/alexsibrin/runbot-auth/internal/entities"
+	"github.com/alexsibrin/runbot-auth/internal/repositories"
 	"github.com/google/uuid"
 	"time"
 )
@@ -69,7 +68,7 @@ func NewAccount(d *AccountDependencies) (*Account, error) {
 func (u *Account) SignIn(ctx context.Context, email, pswd string) (*entities.Account, error) {
 	account, err := u.repo.GetOneByEmail(ctx, email)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+		if errors.As(err, &repositories.ErrAccountNotFoundByEmail{}) {
 			return nil, ErrEmailIsWrong
 		}
 		return nil, err
@@ -116,7 +115,6 @@ func (u *Account) GetOneByUUID(ctx context.Context, uuid string) (*entities.Acco
 
 func (u *Account) Create(ctx context.Context, r *AccountCreateRequest) (*entities.Account, error) {
 	account := u.createReq2Entity(r)
-	fmt.Printf("%+v \n", account)
 	if isexist, err := u.repo.IsExist(ctx, account); err != nil {
 		return nil, err
 	} else if isexist {
