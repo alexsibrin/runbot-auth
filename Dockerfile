@@ -35,7 +35,7 @@ ENV GIN_MODE=release \
     LOGGER_COLORS=true \
     LOGGER_FULLTIMESTAMP=true
 
-WORKDIR /appbin
+WORKDIR /app
 
 COPY --from=build /temp/bin/app ./
 
