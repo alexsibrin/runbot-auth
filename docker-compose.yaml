@@ -7,10 +7,8 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: runbotauth
-    configs:
-      - general_config
     ports:
-      - "8080:8080" # http//
+      - "8080:8080" # http
       - "8081:8081" # grpc
     depends_on:
       postgresdb:
@@ -30,12 +28,13 @@ services:
       retries: 10
     networks:
       - runbotauthnetwork
+    volumes:
+      - "runbotauthdb:/var/lib/postgresql/data"
     ports:
       - "5432:5432"
 networks:
   runbotauthnetwork:
     driver: bridge
 
-configs:
-  general_config:
-    file: config.yaml
+volumes:
+  runbotauthdb:
