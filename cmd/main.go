@@ -28,7 +28,7 @@ func main() {
 	log.Println("-------> App is starting the initialization...")
 
 	// Init config
-	conf, err := config.New(config.YamlInitKey)
+	conf, err := config.New()
 	if err != nil {
 		log.Fatal(err)
 	}

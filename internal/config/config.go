@@ -68,7 +68,7 @@ type Common struct {
 	Health  string
 }
 
-func New(key string) (config *Config, err error) {
+/*func New(key string) (config *Config, err error) {
 	switch key {
 	case EnvInitKey:
 		config, err = initByEnvKey()
@@ -79,7 +79,44 @@ func New(key string) (config *Config, err error) {
 	}
 	return config, err
 }
+*/
 
+func New() (*Config, error) {
+	viper.AddConfigPath(configPath)
+	viper.SetConfigName(configName)
+
+	var c Config
+
+	err := viper.ReadInConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	err = viper.Unmarshal(&c)
+	if err != nil {
+		return nil, err
+	}
+
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	viper.AutomaticEnv()
+
+	for _, s := range os.Environ() {
+		replacer := strings.NewReplacer("_", ".")
+		envToBind := replacer.Replace(strings.Split(s, "=")[0])
+		if err := viper.BindEnv(envToBind); err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	err = viper.Unmarshal(&c)
+	if err != nil {
+		return nil, err
+	}
+
+	return &c, nil
+}
+
+// --- Some old stuff
 func initByYamlKey() (*Config, error) {
 	viper.AddConfigPath(configPath)
 	viper.SetConfigName(configName)
