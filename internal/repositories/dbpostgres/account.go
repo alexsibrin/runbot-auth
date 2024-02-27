@@ -60,7 +60,7 @@ func (r *Account) GetOneByEmail(ctx context.Context, email string) (*entities.Ac
 
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
-		return nil, repositories.NewErrAccountNotFound(email)
+		return nil, repositories.NewErrAccountNotFoundByEmail(email)
 	case err != nil:
 		return nil, err
 	default:
@@ -81,7 +81,7 @@ func (r *Account) GetOneByUUID(ctx context.Context, uuid string) (*entities.Acco
 
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
-		return nil, repositories.NewErrAccountNotFound(uuid)
+		return nil, repositories.NewErrAccountNotFoundByUUID(uuid)
 	case err != nil:
 		return nil, err
 	default:
