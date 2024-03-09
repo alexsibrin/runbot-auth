@@ -33,6 +33,18 @@ func (r *Account) IsExist(ctx context.Context, account *entities.Account) (bool,
 	return exists, nil
 }
 
+func (r *Account) IsExistByUUID(ctx context.Context, uuid string) (bool, error) {
+	query := `
+		SELECT EXISTS(SELECT 1 FROM accounts WHERE uuid = $1);
+	`
+	var exists bool
+	err := r.db.QueryRowContext(ctx, query, uuid).Scan(&exists)
+	if err != nil {
+		return false, err
+	}
+	return exists, nil
+}
+
 func (r *Account) Create(ctx context.Context, account *entities.Account) (*entities.Account, error) {
 
 	repoaccount := r.entity2repo(account)
@@ -87,6 +99,20 @@ func (r *Account) GetOneByUUID(ctx context.Context, uuid string) (*entities.Acco
 	default:
 		return &account, nil
 	}
+}
+
+func (r *Account) SetAccountStatus(ctx context.Context, uuid string, status uint8) error {
+	q := `UPDATE accounts SET status=$1 WHERE UUID=$2`
+	rows, err := r.db.QueryContext(ctx, q, status, uuid)
+	if err != nil {
+		return err
+	}
+
+	if err = rows.Close(); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (r *Account) entity2repo(entity *entities.Account) *repositories.Account {
