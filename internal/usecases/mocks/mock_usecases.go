@@ -151,3 +151,32 @@ func (mr *MockIAccountRepoMockRecorder) IsExist(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsExist", reflect.TypeOf((*MockIAccountRepo)(nil).IsExist), arg0, arg1)
 }
+
+// IsExistByUUID mocks base method.
+func (m *MockIAccountRepo) IsExistByUUID(arg0 context.Context, arg1 string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsExistByUUID", arg0, arg1)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// IsExistByUUID indicates an expected call of IsExistByUUID.
+func (mr *MockIAccountRepoMockRecorder) IsExistByUUID(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsExistByUUID", reflect.TypeOf((*MockIAccountRepo)(nil).IsExistByUUID), arg0, arg1)
+}
+
+// SetAccountStatus mocks base method.
+func (m *MockIAccountRepo) SetAccountStatus(arg0 context.Context, arg1 string, arg2 byte) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetAccountStatus", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetAccountStatus indicates an expected call of SetAccountStatus.
+func (mr *MockIAccountRepoMockRecorder) SetAccountStatus(arg0, arg1, arg2 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetAccountStatus", reflect.TypeOf((*MockIAccountRepo)(nil).SetAccountStatus), arg0, arg1, arg2)
+}

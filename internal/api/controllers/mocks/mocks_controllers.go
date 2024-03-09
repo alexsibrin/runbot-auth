@@ -40,6 +40,20 @@ func (m *MockIAccountUsecase) EXPECT() *MockIAccountUsecaseMockRecorder {
 	return m.recorder
 }
 
+// ChangeAccountStatus mocks base method.
+func (m *MockIAccountUsecase) ChangeAccountStatus(arg0 context.Context, arg1 string, arg2 byte) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ChangeAccountStatus", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ChangeAccountStatus indicates an expected call of ChangeAccountStatus.
+func (mr *MockIAccountUsecaseMockRecorder) ChangeAccountStatus(arg0, arg1, arg2 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ChangeAccountStatus", reflect.TypeOf((*MockIAccountUsecase)(nil).ChangeAccountStatus), arg0, arg1, arg2)
+}
+
 // GetOneByEmail mocks base method.
 func (m *MockIAccountUsecase) GetOneByEmail(arg0 context.Context, arg1 string) (*entities.Account, error) {
 	m.ctrl.T.Helper()
