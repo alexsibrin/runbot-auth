@@ -13,7 +13,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// TODO: Add error handling with status package
+// TODO: Add tests
 
 const (
 	accountKey = "accounts"
@@ -26,7 +26,7 @@ var (
 )
 
 type IController interface {
-	GetOneByEmail(ctx context.Context, email string) (*models.AccountGetModel, error)
+	ChangeAccountStatus(ctx context.Context, model *models.ChangeAccountStatus) (*models.ChangeAccountStatusResponse, error)
 	GetOneByUUID(ctx context.Context, uuid string) (*models.AccountGetModel, error)
 }
 
@@ -68,7 +68,17 @@ func (h *Account) Get(ctx context.Context, model *runbotauthproto.GetAccount) (*
 	if err != nil {
 		return nil, h.handlerError(err)
 	}
-	response := h.convertAccountGetModelToResponse(modelout)
+	response := h.accountGetModelToResponse(modelout)
+	return response, nil
+}
+
+func (h *Account) ChangeAccountStatus(ctx context.Context, model *runbotauthproto.ChangeAccountStatus) (*runbotauthproto.ChangeAccountStatusResponse, error) {
+	result, err := h.controller.ChangeAccountStatus(ctx, h.changeAccountStatusToModel(model))
+	if err != nil {
+		return nil, h.handlerError(err)
+	}
+
+	response := h.changeAccountStatusToResponse(result)
 	return response, nil
 }
 
@@ -89,10 +99,25 @@ func (h *Account) handlerError(err error) error {
 	return status.Error(s, err.Error())
 }
 
-func (h *Account) convertAccountGetModelToResponse(model *models.AccountGetModel) *runbotauthproto.GetAccountResponse {
+func (h *Account) accountGetModelToResponse(model *models.AccountGetModel) *runbotauthproto.GetAccountResponse {
 	return &runbotauthproto.GetAccountResponse{
 		UUID:  model.UUID,
 		Name:  model.Name,
 		Email: model.Email,
+	}
+}
+
+func (h *Account) changeAccountStatusToResponse(model *models.ChangeAccountStatusResponse) *runbotauthproto.ChangeAccountStatusResponse {
+	return &runbotauthproto.ChangeAccountStatusResponse{
+		UUID:     model.UUID,
+		Status:   uint32(model.Status),
+		UpdateAt: model.UpdatedAt,
+	}
+}
+
+func (h *Account) changeAccountStatusToModel(request *runbotauthproto.ChangeAccountStatus) *models.ChangeAccountStatus {
+	return &models.ChangeAccountStatus{
+		UUID:   request.UUID,
+		Status: uint8(request.Status),
 	}
 }
