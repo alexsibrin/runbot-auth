@@ -1,6 +1,8 @@
 syntax = "proto3";
 
-option go_package = "runbot-auth/pkg/runbotauthproto";
+// protoc --go_out=.. --go-grpc_out=.. account.proto
+
+option go_package = "./runbotauthproto";
 
 message GetAccount {
   string UUID = 1;
@@ -29,7 +31,19 @@ message AccountCreateResponse {
   int64 CreatedAt = 16;
 }
 
+message ChangeAccountStatus {
+  string UUID = 1;
+  uint32 Status = 2;
+}
+
+message ChangeAccountStatusResponse {
+  string UUID = 1;
+  uint32 Status = 2;
+  int64 UpdateAt = 3;
+}
+
 service Account {
   rpc Get(GetAccount) returns (GetAccountResponse);
   rpc Add(AccountCreate) returns (AccountCreateResponse);
+  rpc SetStatus(ChangeAccountStatus) returns(ChangeAccountStatusResponse);
 }
