@@ -10,6 +10,7 @@ import (
 	"github.com/alexsibrin/runbot-auth/internal/entities"
 	"github.com/alexsibrin/runbot-auth/internal/usecases"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	"golang.org/x/crypto/bcrypt"
@@ -208,7 +209,7 @@ func TestSignIn(t *testing.T) {
 				assert.ErrorIs(t, err, tc.expectedErr)
 			} else {
 				assert.NoError(t, err)
-				assert.IsType(t, result, &models.SignInResponse{})
+				assert.IsType(t, &models.SignInResponse{}, result)
 			}
 		})
 	}
@@ -267,7 +268,7 @@ func TestGetOneByEmail(t *testing.T) {
 				assert.ErrorIs(t, err, tc.expectedErr)
 			} else {
 				assert.NoError(t, err)
-				assert.IsType(t, result, &models.AccountGetModel{})
+				assert.IsType(t, &models.AccountGetModel{}, result)
 			}
 
 		})
@@ -298,7 +299,7 @@ func TestGetOneByUUID(t *testing.T) {
 		},
 		{
 			name: "Wrong uuid",
-			in:   "some@wrongemail.ru",
+			in:   "wrongeuuid",
 			setupMocks: func() {
 				usecase.EXPECT().GetOneByUUID(ctx, gomock.Any()).Return(nil, sql.ErrNoRows)
 			},
@@ -321,7 +322,7 @@ func TestGetOneByUUID(t *testing.T) {
 				assert.ErrorIs(t, err, tc.expectedErr)
 			} else {
 				assert.NoError(t, err)
-				assert.IsType(t, result, &models.AccountGetModel{})
+				assert.IsType(t, &models.AccountGetModel{}, result)
 			}
 
 		})
@@ -386,4 +387,83 @@ func TestRefreshToken(t *testing.T) {
 		})
 	}
 
+}
+
+func TestAccount_ChangeAccountStatus(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	ctx := context.TODO()
+
+	mockedUsecase := controllers_test.NewMockIAccountUsecase(ctrl)
+
+	validuuid := uuid.NewString()
+
+	testCases := []struct {
+		name          string
+		in            *models.ChangeAccountStatus
+		setupMocks    func()
+		out           *models.ChangeAccountStatusResponse
+		expectedError error
+	}{
+		{
+			name: "Valid case",
+			in: &models.ChangeAccountStatus{
+				UUID:   validuuid,
+				Status: 1,
+			},
+			setupMocks: func() {
+				mockedUsecase.EXPECT().ChangeAccountStatus(ctx, gomock.Any(), gomock.Any()).Return(nil)
+			},
+			out: &models.ChangeAccountStatusResponse{
+				UUID:   validuuid,
+				Status: 1,
+			},
+			expectedError: nil,
+		},
+		{
+			name: "Invalid UUID",
+			in: &models.ChangeAccountStatus{
+				UUID:   "invaliduuid",
+				Status: 1,
+			},
+			setupMocks: func() {
+			},
+			out:           nil,
+			expectedError: validators.ErrUUIDIsNotValid,
+		},
+		{
+			name: "Invalid Status",
+			in: &models.ChangeAccountStatus{
+				UUID:   validuuid,
+				Status: 11,
+			},
+			setupMocks: func() {
+			},
+			out:           nil,
+			expectedError: validators.ErrStatusIsNotValid,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.setupMocks()
+
+			account := &Account{
+				usecase: mockedUsecase,
+			}
+
+			result, err := account.ChangeAccountStatus(ctx, tc.in)
+
+			if tc.expectedError != nil {
+				assert.Error(t, err)
+				assert.ErrorIs(t, err, tc.expectedError)
+			} else {
+				assert.NoError(t, err)
+				assert.IsType(t, &models.ChangeAccountStatusResponse{}, result)
+				assert.Equal(t, tc.out.UUID, result.UUID)
+				assert.Equal(t, tc.out.Status, result.Status)
+				assert.NotEqual(t, 0, result.UpdatedAt)
+			}
+		})
+	}
 }

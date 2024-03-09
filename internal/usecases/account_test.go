@@ -3,6 +3,7 @@ package usecases
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/alexsibrin/runbot-auth/internal/entities"
 	usecases_test "github.com/alexsibrin/runbot-auth/internal/usecases/mocks"
 	"github.com/stretchr/testify/assert"
@@ -108,7 +109,7 @@ func TestSignIn(t *testing.T) {
 				mockRepo.EXPECT().GetOneByEmail(ctx, "test@example.com").Return(testAccount, nil)
 				mockHasher.EXPECT().Compare("wrongpassword", "hashedpassword").Return(errors.New("password mismatch"))
 			},
-			expectedErr: errors.New("password mismatch"),
+			expectedErr: ErrPasswordIsWrong,
 		},
 		{
 			name:  "Database Error",
@@ -127,7 +128,7 @@ func TestSignIn(t *testing.T) {
 				mockRepo.EXPECT().GetOneByEmail(ctx, "test@example.com").Return(testAccount, nil)
 				mockHasher.EXPECT().Compare("correctpassword", "hashedpassword").Return(errors.New("hasher error"))
 			},
-			expectedErr: errors.New("hasher error"),
+			expectedErr: ErrPasswordIsWrong,
 		},
 	}
 
@@ -275,12 +276,12 @@ func TestCreate(t *testing.T) {
 		Email:    "myemail",
 		Name:     "My name is",
 		Password: "mypassword",
-	} // Populate with necessary fields for your test
+	}
 	testReq := &AccountCreateRequest{
 		Email:    testAccount.Email,
 		Name:     testAccount.Name,
 		Password: testAccount.Password,
-	} // Populate with necessary fields for your test
+	}
 
 	tests := []struct {
 		name        string
@@ -415,6 +416,76 @@ func TestSignUp(t *testing.T) {
 				assert.EqualError(t, err, tc.expectedErr.Error())
 			} else {
 				assert.IsType(t, &entities.Account{}, acc)
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestAccount_ChangeAccountStatus(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRepo := usecases_test.NewMockIAccountRepo(ctrl)
+	ctx := context.TODO()
+
+	testCases := []struct {
+		name        string
+		uuid        string
+		status      uint8
+		setupMocks  func()
+		expectedErr error
+	}{
+		{
+			name:   "Valid case",
+			uuid:   "validuuid",
+			status: 1,
+			setupMocks: func() {
+				mockRepo.EXPECT().IsExistByUUID(ctx, gomock.Any()).Return(true, nil)
+				mockRepo.EXPECT().SetAccountStatus(ctx, gomock.Any(), gomock.Any()).Return(nil)
+			},
+			expectedErr: nil,
+		},
+		{
+			name:   "Account is not exist",
+			uuid:   "validuuid",
+			status: 1,
+			setupMocks: func() {
+				mockRepo.EXPECT().IsExistByUUID(ctx, gomock.Any()).Return(false, nil)
+			},
+			expectedErr: ErrAccountIsNotExist,
+		},
+		{
+			name:   "Repo error IsExistByUUID",
+			uuid:   "validuuid",
+			status: 1,
+			setupMocks: func() {
+				mockRepo.EXPECT().IsExistByUUID(ctx, gomock.Any()).Return(false, fmt.Errorf("some repo error"))
+			},
+			expectedErr: fmt.Errorf("some repo error"),
+		},
+		{
+			name:   "Repo error SetAccountStatus",
+			uuid:   "validuuid",
+			status: 1,
+			setupMocks: func() {
+				mockRepo.EXPECT().IsExistByUUID(ctx, gomock.Any()).Return(true, nil)
+				mockRepo.EXPECT().SetAccountStatus(ctx, gomock.Any(), gomock.Any()).Return(fmt.Errorf("some repo error"))
+			},
+			expectedErr: fmt.Errorf("some repo error"),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.setupMocks()
+			account := &Account{repo: mockRepo}
+			err := account.ChangeAccountStatus(ctx, tc.uuid, tc.status)
+
+			if tc.expectedErr != nil {
+				assert.Error(t, err)
+				assert.EqualError(t, err, tc.expectedErr.Error())
+			} else {
 				assert.NoError(t, err)
 			}
 		})
