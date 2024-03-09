@@ -20,6 +20,7 @@ type IAccountUsecase interface {
 	SignUp(ctx context.Context, r *entities.Account) (*entities.Account, error)
 	GetOneByEmail(ctx context.Context, uuid string) (*entities.Account, error)
 	GetOneByUUID(ctx context.Context, uuid string) (*entities.Account, error)
+	ChangeAccountStatus(ctx context.Context, uuid string, status uint8) error
 }
 
 type ISecurer interface {
@@ -131,12 +132,30 @@ func (c *Account) RefreshToken(_ context.Context, token string) (string, error) 
 	if err != nil {
 		return "", err
 	}
-	// TODO: ??? to add verif in the Usecase
+
 	rtoken, err := c.securer.RefreshToken(account)
 	if err != nil {
 		return "", err
 	}
 	return rtoken, nil
+}
+
+func (c *Account) ChangeAccountStatus(ctx context.Context, model *models.ChangeAccountStatus) (*models.ChangeAccountStatusResponse, error) {
+	err := validators.AccountUUID(model.UUID)
+	if err != nil {
+		return nil, err
+	}
+	err = validators.AccountStatus(model.Status)
+	if err != nil {
+		return nil, err
+	}
+
+	err = c.usecase.ChangeAccountStatus(ctx, model.UUID, model.Status)
+	if err != nil {
+		return nil, err
+	}
+	response := c.changeAccountStatus2Response(model)
+	return response, nil
 }
 
 func (c *Account) accountCreateModel2Entity(acc *models.SignUp) *entities.Account {
@@ -207,4 +226,12 @@ func (c *Account) createToken(a *entities.Account) (*models.Token, error) {
 		Access:  atoken,
 		Refresh: rtoken,
 	}, nil
+}
+
+func (c *Account) changeAccountStatus2Response(model *models.ChangeAccountStatus) *models.ChangeAccountStatusResponse {
+	return &models.ChangeAccountStatusResponse{
+		UUID:      model.UUID,
+		Status:    model.Status,
+		UpdatedAt: time.Now().Unix(),
+	}
 }
