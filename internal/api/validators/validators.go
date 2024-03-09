@@ -2,6 +2,8 @@ package validators
 
 import (
 	"errors"
+	"github.com/alexsibrin/runbot-auth/internal/entities"
+	"github.com/google/uuid"
 	"regexp"
 )
 
@@ -25,6 +27,9 @@ var (
 
 	ErrNameIsTooShort         = errors.New("name is too short")
 	ErrNameFormatIsNotCorrect = errors.New("name format is not correct")
+
+	ErrUUIDIsNotValid   = errors.New("UUID is not valid")
+	ErrStatusIsNotValid = errors.New("status is not valid")
 )
 
 func Email(e string) error {
@@ -67,4 +72,20 @@ func Name(n string) error {
 		return ErrNameFormatIsNotCorrect
 	}
 	return nil
+}
+
+func AccountUUID(uuidstr string) error {
+	if _, err := uuid.Parse(uuidstr); err != nil {
+		return ErrUUIDIsNotValid
+	}
+	return nil
+}
+
+func AccountStatus(status uint8) error {
+	switch status {
+	case entities.Active, entities.Suspended, entities.Blocked:
+		return nil
+	default:
+		return ErrStatusIsNotValid
+	}
 }
