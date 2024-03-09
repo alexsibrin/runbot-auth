@@ -80,3 +80,14 @@ type Token struct {
 func (t Token) MarshalJSON() ([]byte, error) {
 	return json.Marshal(t.Access)
 }
+
+type ChangeAccountStatus struct {
+	UUID   string
+	Status uint8
+}
+
+type ChangeAccountStatusResponse struct {
+	UUID      string
+	Status    uint8
+	UpdatedAt int64
+}
