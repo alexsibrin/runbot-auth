@@ -25,6 +25,8 @@ import (
 
 func main() {
 
+	// TODO: Move all initializations to /internal/app. But config and log inits leave here
+
 	log.Println("-------> App is starting the initialization...")
 
 	// Init config
@@ -119,8 +121,12 @@ func main() {
 	// Init http restserver
 	restserver, err := rest.NewServer(&rest.DependenciesServer{
 		Config: &rest.Config{
-			Host: conf.RestServer.Host,
-			Port: conf.RestServer.Port,
+			Host:              conf.RestServer.Host,
+			Port:              conf.RestServer.Port,
+			ReadTimeout:       conf.RestServer.ReadTimeout,
+			ReadHeaderTimeout: conf.RestServer.ReadHeaderTimeout,
+			WriteTimeout:      conf.RestServer.WriteTimeout,
+			IdleTimeout:       conf.RestServer.IdleTimeout,
 		},
 		Handler: router,
 	})
