@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 )
 
 var (
@@ -14,8 +15,12 @@ var (
 )
 
 type Config struct {
-	Host string
-	Port string
+	Host              string
+	Port              string
+	ReadTimeout       time.Duration
+	ReadHeaderTimeout time.Duration
+	WriteTimeout      time.Duration
+	IdleTimeout       time.Duration
 }
 
 type DependenciesServer struct {
@@ -46,8 +51,12 @@ func NewServer(d *DependenciesServer) (*Server, error) {
 	addr := fmt.Sprintf("%s:%s", d.Config.Host, d.Config.Port)
 
 	hs := &http.Server{
-		Addr:    addr,
-		Handler: d.Handler,
+		Addr:              addr,
+		Handler:           d.Handler,
+		ReadTimeout:       d.Config.ReadTimeout,
+		ReadHeaderTimeout: d.Config.ReadHeaderTimeout,
+		WriteTimeout:      d.Config.WriteTimeout,
+		IdleTimeout:       d.Config.IdleTimeout,
 	}
 
 	return &Server{
