@@ -23,8 +23,6 @@ const (
 type IAccountController interface {
 	SignIn(ctx context.Context, model *models.SignIn) (*models.SignInResponse, error)
 	SignUp(ctx context.Context, model *models.SignUp) (*models.SignUpResponse, error)
-	GetOneByEmail(ctx context.Context, email string) (*models.AccountGetModel, error)
-	GetOneByUUID(ctx context.Context, uuid string) (*models.AccountGetModel, error)
 	RefreshToken(_ context.Context, token string) (string, error)
 }
 
@@ -101,32 +99,6 @@ func (h *Account) SignUp(g *gin.Context) {
 	g.JSON(http.StatusOK, reponsemodel)
 }
 
-func (h *Account) GetOne(g *gin.Context) {
-	logger := h.logger.WithField(methodKey, "GetOne")
-
-	uuid := g.Param("email")
-	account, err := h.controller.GetOneByEmail(g, uuid)
-	if err != nil {
-		h.handleError(g, logger, err)
-		return
-	}
-
-	g.JSON(http.StatusOK, account)
-}
-
-func (h *Account) GetOneByUUID(g *gin.Context) {
-	logger := h.logger.WithField(methodKey, "GetOneByUUID")
-
-	uuid := g.Param("uuid")
-	account, err := h.controller.GetOneByUUID(g, uuid)
-	if err != nil {
-		h.handleError(g, logger, err)
-		return
-	}
-
-	g.JSON(http.StatusOK, account)
-}
-
 func (h *Account) RefreshToken(g *gin.Context) {
 	logger := h.logger.WithField(methodKey, "RefreshToken")
 	token, err := h.getTokenFromCookie(g)
@@ -159,11 +131,21 @@ func (h *Account) handleError(g *gin.Context, logger logrus.FieldLogger, err err
 }
 
 func (h *Account) getErrorMessage(err error) string {
+	defaultInputErr := "input data is wrong"
+
 	switch {
 	case errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF):
 		return "wrong input data, please check the model"
-	case errors.Is(err, usecases.ErrEmailIsWrong) || errors.Is(err, usecases.ErrPasswordIsWrong):
-		return "input data is wrong"
+	case errors.Is(err, usecases.ErrEmailIsWrong):
+		return defaultInputErr
+	case errors.Is(err, usecases.ErrPasswordIsWrong):
+		return defaultInputErr
+	case errors.Is(err, usecases.ErrAccountAlreadyExist):
+		return defaultInputErr
+	case errors.Is(err, validators.ErrNameIsTooShort):
+		return defaultInputErr
+	case errors.Is(err, validators.ErrNameFormatIsNotCorrect):
+		return defaultInputErr
 	default:
 		return err.Error()
 	}
@@ -173,7 +155,19 @@ func (h *Account) getStatusCode(err error) int {
 	switch {
 	case errors.Is(err, validators.ErrEmailIsTooShort):
 		return http.StatusBadRequest
+	case errors.Is(err, usecases.ErrEmailIsWrong):
+		return http.StatusBadRequest
+	case errors.Is(err, usecases.ErrPasswordIsWrong):
+		return http.StatusBadRequest
 	case errors.Is(err, validators.ErrPasswordIsTooShort):
+		return http.StatusBadRequest
+	case errors.Is(err, validators.ErrNameIsTooShort):
+		return http.StatusBadRequest
+	case errors.Is(err, validators.ErrNameFormatIsNotCorrect):
+		return http.StatusBadRequest
+	case errors.Is(err, validators.ErrPasswordFormatIsNotCorrect):
+		return http.StatusBadRequest
+	case errors.Is(err, usecases.ErrAccountAlreadyExist):
 		return http.StatusBadRequest
 	case errors.Is(err, io.EOF):
 		return http.StatusBadRequest
@@ -184,8 +178,6 @@ func (h *Account) getStatusCode(err error) int {
 	case errors.Is(err, jwt.ErrTokenSignatureInvalid):
 		return http.StatusBadRequest
 	case errors.Is(err, jwt.ErrHashUnavailable):
-		return http.StatusBadRequest
-	case errors.Is(err, usecases.ErrDataIsWrong):
 		return http.StatusBadRequest
 	default:
 		return http.StatusInternalServerError
