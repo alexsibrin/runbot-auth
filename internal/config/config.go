@@ -41,8 +41,12 @@ type PostgreSQL struct {
 }
 
 type RestServer struct {
-	Host string
-	Port string
+	Host              string
+	Port              string
+	ReadTimeout       time.Duration
+	ReadHeaderTimeout time.Duration
+	WriteTimeout      time.Duration
+	IdleTimeout       time.Duration
 }
 
 type GRPCServer struct {
@@ -67,19 +71,6 @@ type Common struct {
 	Version string
 	Health  string
 }
-
-/*func New(key string) (config *Config, err error) {
-	switch key {
-	case EnvInitKey:
-		config, err = initByEnvKey()
-	case YamlInitKey:
-		config, err = initByYamlKey()
-	default:
-		config, err = nil, ErrWrongInitKey
-	}
-	return config, err
-}
-*/
 
 func New() (*Config, error) {
 	viper.AddConfigPath(configPath)
