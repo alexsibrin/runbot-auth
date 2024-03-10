@@ -30,7 +30,7 @@ func NewLogger(config *Config) ILogger {
 		lvl = 6
 	}
 
-	l.SetLevel(logrus.Level(config.Level))
+	l.SetLevel(logrus.Level(lvl))
 
 	return l
 }

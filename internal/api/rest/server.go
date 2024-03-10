@@ -29,8 +29,7 @@ type DependenciesServer struct {
 }
 
 type Server struct {
-	config  *Config
-	handler http.Handler
+	config *Config
 
 	server *http.Server
 }

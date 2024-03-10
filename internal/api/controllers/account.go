@@ -5,7 +5,6 @@ import (
 	"github.com/alexsibrin/runbot-auth/internal/api/models"
 	"github.com/alexsibrin/runbot-auth/internal/api/validators"
 	"github.com/alexsibrin/runbot-auth/internal/entities"
-	"github.com/alexsibrin/runbot-auth/internal/usecases"
 	"github.com/google/uuid"
 	"time"
 )
@@ -165,14 +164,6 @@ func (c *Account) accountCreateModel2Entity(acc *models.SignUp) *entities.Accoun
 		Password:  acc.Password,
 		Name:      acc.Name,
 		CreatedAt: time.Now().Unix(),
-	}
-}
-
-func (c *Account) accountCreateModel2UsecaseCreateRequest(acc *models.AccountCreate) *usecases.AccountCreateRequest {
-	return &usecases.AccountCreateRequest{
-		Email:    acc.Email,
-		Password: acc.Password,
-		Name:     acc.Name,
 	}
 }
 

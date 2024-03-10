@@ -1,7 +1,6 @@
 package config
 
 import (
-	"errors"
 	"github.com/spf13/viper"
 	"log"
 	"os"
@@ -10,16 +9,8 @@ import (
 )
 
 const (
-	EnvInitKey = "env"
-
-	YamlInitKey = "yaml"
-	configPath  = "."
-	configName  = "config"
-)
-
-var (
-	ErrWrongInitKey = errors.New("wrong config init key")
-	ErrConfigInit   = errors.New("error while config initialization")
+	configPath = "."
+	configName = "config"
 )
 
 type Config struct {
@@ -105,46 +96,4 @@ func New() (*Config, error) {
 	}
 
 	return &c, nil
-}
-
-// --- Some old stuff
-func initByYamlKey() (*Config, error) {
-	viper.AddConfigPath(configPath)
-	viper.SetConfigName(configName)
-
-	var c Config
-
-	err := viper.ReadInConfig()
-	if err != nil {
-		return nil, err
-	}
-
-	err = viper.Unmarshal(&c)
-	if err != nil {
-		return nil, err
-	}
-
-	return &c, nil
-}
-
-// FIXME: Waiting when viper will get ability to map env vars to a struct directly without kostils
-func initByEnvKey() (*Config, error) {
-	var cfg Config
-	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-	viper.AutomaticEnv()
-
-	for _, s := range os.Environ() {
-		replacer := strings.NewReplacer("_", ".")
-		envToBind := replacer.Replace(strings.Split(s, "=")[0])
-		if err := viper.BindEnv(envToBind); err != nil {
-			log.Fatal(err)
-		}
-	}
-
-	err := viper.Unmarshal(&cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	return &cfg, nil
 }

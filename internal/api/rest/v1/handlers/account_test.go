@@ -91,6 +91,8 @@ func TestSignIn(t *testing.T) {
 			assert.IsType(t, &Account{}, handler)
 
 			req, err := http.NewRequest(http.MethodPost, "/signin", bytes.NewBuffer([]byte(tc.in)))
+			assert.NoError(t, err)
+
 			w := httptest.NewRecorder()
 
 			gctx, _ := gin.CreateTestContext(w)
@@ -215,6 +217,8 @@ func TestSignUp(t *testing.T) {
 			assert.IsType(t, &Account{}, handler)
 
 			req, err := http.NewRequest(http.MethodPost, "/signup", bytes.NewBuffer([]byte(tc.in)))
+			assert.NoError(t, err)
+
 			w := httptest.NewRecorder()
 
 			gctx, _ := gin.CreateTestContext(w)
