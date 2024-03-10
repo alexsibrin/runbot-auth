@@ -1,0 +1,14 @@
+# https://golangci-lint.run/usage/configuration/
+run:
+  allow-parallel-runners: true
+  show-stats: true
+linters:
+  disable-all: true
+  enable:
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    - gosec
