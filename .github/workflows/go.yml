@@ -81,5 +81,5 @@ jobs:
     - name: Upload artifact
       uses: actions/upload-artifact@v2
       with:
-        name: app
+        name: runbot-auth
         path: app
